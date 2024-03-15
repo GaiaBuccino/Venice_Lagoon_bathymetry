@@ -18,11 +18,12 @@ def geom_creation(coord1: np.ndarray, coord2:np.ndarray, structured:bool = False
     
     if structured:
         points = []
-        for ii in coord1:
-            for jj in coord2:
-                
-                pt = Point(ii,jj)
+        for jj in coord2:
+            for ii in coord1:
+
+                pt = Point(jj,ii)    #coordinates of points given as lat, lon
                 points.append(pt)
+
         return points
 
     else:
@@ -36,11 +37,11 @@ def geom_creation(coord1: np.ndarray, coord2:np.ndarray, structured:bool = False
 
 ## STRUCTURED GRID DATA
     
-x_dim = 61    #from DATA.bin 111 x 111, from RESCALED.bin 61x61
-y_dim = 61
+x_dim = 111    #from DATA.bin 111 x 111, from RESCALED.bin 61x61
+y_dim = 111
 
 fileLoc = '/g100_work/OGS23_PRACE_IT/gbuccino/test/Venice_Lagoon_hydrodynamics/'
-area = 'RESCALED1_128_Venice_lagoon' #can be RESCALED1_128_  OR  DATA_
+area = 'DATA_Venice_lagoon' #can be RESCALED1_128_  OR  DATA_
 fileName = fileLoc + f'bathy_{area}.bin' 
 fileLat = fileLoc + f'lat_{area}.bin'
 fileLon = fileLoc + f'lon_{area}.bin'   
@@ -49,7 +50,7 @@ data_bat = np.fromfile(fileName, dtype="<f4", count=-1).reshape(x_dim, y_dim)
 data_lon = np.fromfile(fileLon, dtype="<f4", count=-1)
 data_lat = np.fromfile(fileLat, dtype="<f4", count=-1)
 
-da_bath = xr.DataArray(name='depth', data =data_bat, dims = ("lon","lat"), coords={"lat": data_lat, "lon": data_lon},)  # coords have to be in the same order of the file data_bat
+da_bath = xr.DataArray(name='depth', data =data_bat, dims = ("lat","lon"), coords={"lat": data_lat, "lon": data_lon},)  # coords have to be in the same order of the file data_bat
 
 data_pd = da_bath.to_dataframe()
 data_pd.to_csv()
