@@ -37,32 +37,34 @@ def geom_creation(coord1: np.ndarray, coord2:np.ndarray, structured:bool = False
 
 ## STRUCTURED GRID DATA
     
-x_dim = 111    #from DATA.bin 111 x 111, from RESCALED.bin 61x61
-y_dim = 111
+x_dim = 792   #from DATA.bin 111 x 111, from RESCALED.bin 61x61, 792x424 from RESCALED1_128_NO_lagoon, 61x61 from _cut_Venice_lagoon
+y_dim = 424
 
 fileLoc = '/g100_work/OGS23_PRACE_IT/gbuccino/test/Venice_Lagoon_hydrodynamics/'
-area = 'DATA_Venice_lagoon' #can be RESCALED1_128_  OR  DATA_
+area = 'completa_1_128' #can be RESCALED1_128_  OR  DATA_ OR lagoon_ADRIsize OR ADRI_1_128_NO_Lagoon
+
+
 fileName = fileLoc + f'bathy_{area}.bin' 
 fileLat = fileLoc + f'lat_{area}.bin'
 fileLon = fileLoc + f'lon_{area}.bin'   
 
-data_bat = np.fromfile(fileName, dtype="<f4", count=-1).reshape(x_dim, y_dim)
+data_bat = np.fromfile(fileName, dtype="<f4", count=-1).reshape(y_dim, x_dim)
 data_lon = np.fromfile(fileLon, dtype="<f4", count=-1)
 data_lat = np.fromfile(fileLat, dtype="<f4", count=-1)
 
-da_bath = xr.DataArray(name='depth', data =data_bat, dims = ("lat","lon"), coords={"lat": data_lat, "lon": data_lon},)  # coords have to be in the same order of the file data_bat
+da_bath = xr.DataArray(name='depth', data =data_bat, dims = ("lat","lon"), coords={"lon": data_lon,"lat": data_lat})  # coords have to be in the same order of the file data_bat
 
 data_pd = da_bath.to_dataframe()
-data_pd.to_csv()
-bathy_Q = gpd.GeoDataFrame(data_pd, geometry=geom_creation(data_lon,data_lat,structured = True), crs="EPSG:4326") 
-bathy_Q.to_csv(f'{fileLoc}'+f'{area}.csv')
+data_pd.to_csv(f'{fileLoc}'+f'{area}.csv')
+# bathy_Q = gpd.GeoDataFrame(data_pd, geometry=geom_creation(data_lon,data_lat,structured = True), crs="EPSG:4326") 
+# bathy_Q.to_csv(f'{fileLoc}'+f'{area}_geodata.csv')
 
-""" plt.pcolormesh(data_bat)
+plt.pcolormesh(data_bat)
 plt.colorbar()
 plt.clim(0,-4)
 plt.show()
 
-plt.savefig(f'{fileLoc}Bathy_{area}') """
+plt.savefig(f'{fileLoc}Bathy_{area}') 
 
 ## UN-STRUCTURED DATA
 
@@ -96,8 +98,3 @@ np.save(f'{fileLoc}'+f'lon_coarsed2013_4326.npy',bathy_C_lon4326)
 np.save(f'{fileLoc}'+f'depth_coarsed2013_4326.npy',bathy_C_chan_depth4326)
 
 bathy_C_chan_4326.to_csv(f'{fileLoc}'+f'bathy_coarsed2013_4326.csv')
-
-
-
-
-

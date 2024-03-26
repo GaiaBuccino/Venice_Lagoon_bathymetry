@@ -16,17 +16,21 @@ import geodatasets
 plt.close()
 
 fileLoc = '/g100_work/OGS23_PRACE_IT/gbuccino/test/Venice_Lagoon_hydrodynamics/'
-area = 'DATA_Venice_lagoon' #can be Venice_Lagoon, Grado_Lagoon 
+area = 'lagoon_ADRIsize' #can be   OR  DATA_ cut_Venice_lagoon
 
 bathy_grid = pd.read_csv(f'{fileLoc}'+f'{area}.csv', skiprows=0, header=0)
 bathy_unstruct = pd.read_csv(f'{fileLoc}'+'bathy_2003CORILA_4326.csv',names= ['idx','lon','lat','depth1','depth2', 'geometry'],header=0)
 #bathy_chan = pd.read_csv(f'{fileLoc}'+'bathy_coarsed2013_4326.csv',skiprows=0)
 bathy_new = bathy_grid[['lat', 'lon']].copy()
 
+# bathy_Adri = pd.read_csv(f'{fileLoc}'+f'cut_Adri.csv', skiprows=0, header=0)
+# latAd = np.array(bathy_grid['lat'][0::61])
+# lonAd = np.array(bathy_grid['lon'][0:61:1])
+
 
 # Initialization
-lat_file = np.array(bathy_grid['lat'][0::111])
-lon_file = np.array(bathy_grid['lon'][0:111:1])
+lon_file = np.array(bathy_grid['lon'][0:792])
+lat_file = np.array(bathy_grid['lat'][0:335807:792])
 
 # Enlarge the grid
 dlon = lon_file[1] - lon_file[0]
@@ -42,9 +46,6 @@ lonbins[-1] = np.max(lon_file) + 0.5*dlon
 latbins = np.zeros((len(latb)+1))
 latbins[0:len(latb)] = latb
 latbins[-1] = np.max(lat_file) + 0.5*dlat
-
-
-xx, yy = np.meshgrid(latbins,lonbins)
 
 # Upload files
 
@@ -71,62 +72,29 @@ mean_dep[occ_dep != 0] = sum_dep[occ_dep != 0]/occ_dep[occ_dep != 0]
 
 min_avg_dep = np.min(mean_dep)
 
-mean_dep[occ_dep == 0] = None
-mean_dep[mean_dep>0] = None
+mean_dep[occ_dep == 0] = 0.0    #None is better but 0.0 is for making the difference
+mean_dep[mean_dep>0] = 0.0    #None is better but 0.0 is for making the difference 
 
 dep = mean_dep.flatten()
 
 bathy_new['depth'] = pd.Series(dep) 
 bathy_grid[bathy_new['depth'].isna()] = None
 
+bathy_new.to_csv(f'{fileLoc}' + 'adjusted_bathy.csv', index=False)
 
-""" # Choose a pixel (minimum in avg depth)
+# np.save(f'{fileLoc}'+f'adjusted_bathy.npy', bathy_new)
 
-check =  min_avg_dep
-x_check, y_check = np.where(mean_dep == check)
-
-hist_check_x = [lonbins[x_check[0]], lonbins[x_check[0]+1]]
-hist_check_y = [latbins[y_check[0]], latbins[y_check[0]+1]]
-
-occ_check, lo, la = np.histogram2d(lons_un, lats_un, bins = 1, range = [hist_check_x, hist_check_y])
-sum_check, lo, la = np.histogram2d(lons_un, lats_un, bins = 1, range = [hist_check_x, hist_check_y], weights=depth_un)
-
-binEdges, np.digitize(A, binEdges)
-
-
-x,y = np.meshgrid(hist_check_x, hist_check_y)
-# plt.xlim(lonbins[x_check[0]], lonbins[x_check[0]+1])
-# plt.ylim(latbins[y_check[0]], latbins[y_check[0]+1])
-plt.grid()
-plt.plot(x,y, marker="o", markersize=20, markeredgecolor="red", markerfacecolor="green")
-#plt.plot(occ_check[], marker="o", markersize=20, markeredgecolor="red", markerfacecolor="green")
-plt.savefig(f'{fileLoc}'+'prova_dots.pdf', format='pdf')
-plt.close()
- """
-
-
-""" new_bathy_df = { 'lons': xx,
-                 'lats': yy,
-                 'depth': mean_dep
-
-}
-
-new_bathy_df = pd.DataFrame(new_bathy_df)
-new_bathy_df.to_csv(f'{fileLoc}'+f'bathy_interpolated_dataBin.csv')
- """
 # mean_dep = np.ma.masked_where(occ_dep==0, mean_dep)
 # occ_dep= np.ma.masked_where(occ_dep==0, occ_dep)
 
-#bathy_new['depth'] = 
-
 
 # ****************
-# *** Plot map ***
+# *** Mean values in the cells (unstructured vs 1/128 degree) ***
 X, Y = np.meshgrid(lonbins, latbins)
 plt.figure(figsize=(5, 10))
 
 # Plot mean data
-ax = plt.subplot(211)
+ax = plt.subplot(121)
 ax.set_facecolor('0.8')
 plt.pcolormesh(X, Y, mean_dep, cmap=cm.RdBu_r)
 plt.colorbar(label='mean depth into the pixel')
@@ -138,7 +106,7 @@ plt.ylabel('Latitude')
 
 # Plot number of observations
 
-ax = plt.subplot(212)
+ax = plt.subplot(122)
 
 plt.pcolormesh(X, Y, occ_dep)
 plt.colorbar(label='Number of observations')
@@ -147,59 +115,42 @@ plt.colorbar(label='Number of observations')
 plt.xlabel('Longitude')
 plt.ylabel('Latitude')
 
-plt.savefig(f'{fileLoc}'+'mean_bathy.pdf', format='pdf')
+plt.savefig(f'{fileLoc}'+'Mean_unstructured_on_1_128')
 plt.close()
 
-# Plot data on subplots
+# ****************
+# *** Plot of the new bathymetry (unstructured averaged) ***
+
+xx, yy = np.meshgrid(lon_file, lat_file)
+
+
 fig = plt.figure()
-ax1 = fig.add_subplot(131)
-ax1.title.set_text('Interpolated bathymetry on DATA')
-plt.pcolormesh(X,Y,bathy_new['depth'].to_numpy().reshape(111,111))
+#ax1 = fig.add_subplot(131)
+# ax1.title.set_text('Interpolated bathymetry on 1/128')
+plt.pcolormesh(xx,yy,bathy_new['depth'].to_numpy().reshape(len(lat_file),len(lon_file)))
 plt.colorbar()
-plt.clim(min_avg_dep, 0.0)
-plt.savefig(f'{fileLoc}'+ 'Interpolated_on_DATAbin.pdf')
+plt.clim(-4, 0.0)
+plt.savefig(f'{fileLoc}'+ 'Adjusted_bathymetry')
 
 
-ax2 = fig.add_subplot(132)
-ax2.title.set_text('Original bathymetry')
-plt.pcolormesh(X,Y,bathy_grid['depth'].to_numpy().reshape(111,111))
-plt.colorbar()
-plt.clim(min_avg_dep, 0.0)
-plt.savefig(f'{fileLoc}'+ 'Original_DATAbin.pdf')
+# ax2 = fig.add_subplot(132)
+# ax2.title.set_text('Original bathymetry')
+# plt.pcolormesh(X,Y,bathy_grid['depth'].to_numpy().reshape(61,61))
+# plt.colorbar()
+# plt.clim(min_avg_dep, 0.0)
+# plt.savefig(f'{fileLoc}'+ 'Original_1_128.pdf')
 
 
-bathy_diff = bathy_grid[['lat', 'lon','depth']].copy()
-bathy_diff['depth'] = (bathy_grid['depth'] - bathy_new['depth'])
-ax3 = fig.add_subplot(133)
-ax3.title.set_text('Difference in bathymetry')
-plt.pcolormesh(X,Y,bathy_diff['depth'].to_numpy().reshape(111,111))
-plt.colorbar()
-plt.savefig(f'{fileLoc}'+ 'Bathymetries_difference.pdf', format='pdf')
-
-fig.savefig(f'{fileLoc}'+ 'Bathymetries_comparison.pdf', format='pdf')
+# bathy_diff = bathy_grid[['lat', 'lon','depth']].copy()
+# bathy_diff['depth'] = (bathy_grid['depth'] - bathy_new['depth'])
+# ax3 = fig.add_subplot(133)
+# ax3.title.set_text('Difference in bathymetry')
+# plt.pcolormesh(X,Y,bathy_diff['depth'].to_numpy().reshape(61,61))
+# plt.colorbar()
+# plt.savefig(f'{fileLoc}'+ 'Bathymetries_difference.pdf', format='pdf')
 
 
-""" plt.figure(figsize=(30, 30))
-ax1 = fig.add_subplot(131)
-plt.pcolormesh(X,Y,bathy_new['depth'].to_numpy().reshape(111,111))
-plt.colorbar()
-plt.clim(min_avg_dep, 0.0)
-ax1.title.set_text('Interpolated bathymetry on DATA')
-plt.savefig(f'{fileLoc}'+ 'Bathymetry_Interpolated_on_DATA.pdf', format='pdf')
 
-ax2 = fig.add_subplot(132)
-plt.pcolormesh(bathy_grid['lon'].to_numpy().reshape(111,111),bathy_grid['lat'].to_numpy().reshape(111,111),bathy_grid['depth'].to_numpy().reshape(111,111))
-plt.colorbar()
-ax2.title.set_text('Original bathymetry')
-
-ax3 = fig.add_subplot(133)
-bathy_diff = bathy_grid[['lat', 'lon','depth']].copy()
-bathy_diff['depth'] = (bathy_grid['depth'] - bathy_new['depth'])
-plt.pcolormesh(bathy_new['lon'].to_numpy().reshape(111,111),bathy_new['lat'].to_numpy().reshape(111,111),bathy_diff['depth'].to_numpy().reshape(111,111))
-plt.colorbar()
-ax3.title.set_text('Difference among bathymetry')
-
-plt.savefig(f'{fileLoc}'+ 'Bathymetry_on_DATA.pdf', format='pdf') """
 
 
 plt.close()
