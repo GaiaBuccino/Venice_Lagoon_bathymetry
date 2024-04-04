@@ -89,7 +89,7 @@ bathy_new.to_csv(f'{fileLoc}' + 'adjusted_bathy.csv', index=False)
 
 
 # ****************
-# *** Mean values in the cells (unstructured vs 1/128 degree) ***
+""" # *** Mean values in the cells (unstructured vs 1/128 degree) ***
 X, Y = np.meshgrid(lonbins, latbins)
 plt.figure(figsize=(5, 10))
 
@@ -115,7 +115,7 @@ plt.colorbar(label='Number of observations')
 plt.xlabel('Longitude')
 plt.ylabel('Latitude')
 
-plt.savefig(f'{fileLoc}'+'Mean_unstructured_on_1_128')
+#plt.savefig(f'{fileLoc}'+'Mean_unstructured_on_1_128')
 plt.close()
 
 # ****************
@@ -130,9 +130,9 @@ fig = plt.figure()
 plt.pcolormesh(xx,yy,bathy_new['depth'].to_numpy().reshape(len(lat_file),len(lon_file)))
 plt.colorbar()
 plt.clim(-4, 0.0)
-plt.savefig(f'{fileLoc}'+ 'Adjusted_bathymetry')
+plt.savefig(f'{fileLoc}'+ 'Bathymetry_averaged_lagoon')
 
-
+ """
 # ax2 = fig.add_subplot(132)
 # ax2.title.set_text('Original bathymetry')
 # plt.pcolormesh(X,Y,bathy_grid['depth'].to_numpy().reshape(61,61))

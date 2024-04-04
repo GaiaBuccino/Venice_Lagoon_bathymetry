@@ -37,11 +37,11 @@ def geom_creation(coord1: np.ndarray, coord2:np.ndarray, structured:bool = False
 
 ## STRUCTURED GRID DATA
     
-x_dim = 792   #from DATA.bin 111 x 111, from RESCALED.bin 61x61, 792x424 from RESCALED1_128_NO_lagoon, 61x61 from _cut_Venice_lagoon
-y_dim = 424
+x_dim = 61  #from DATA.bin 111 x 111, from RESCALED.bin 61x61, 792x424 from RESCALED1_128_NO_lagoon, 61x61 from _cut_Venice_lagoon
+y_dim = 61
 
 fileLoc = '/g100_work/OGS23_PRACE_IT/gbuccino/test/Venice_Lagoon_hydrodynamics/'
-area = 'completa_1_128' #can be RESCALED1_128_  OR  DATA_ OR lagoon_ADRIsize OR ADRI_1_128_NO_Lagoon
+area = 'RESCALED1_128_Venice_lagoon' #can be RESCALED1_128_  OR  DATA_ OR lagoon_ADRIsize OR ADRI_1_128_NO_Lagoon
 
 
 fileName = fileLoc + f'bathy_{area}.bin' 

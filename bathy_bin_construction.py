@@ -29,6 +29,7 @@ lon_Adri = np.array(bathy_Adri['lon'][0:792])
 
 bathy_temp = pd.read_csv(f'{fileLoc}'+'adjusted_bathy.csv', skiprows=0, header=0)
 bathy_temp[bathy_temp['depth'].isna()] = 0.0
+bathy_temp.to_csv(f'{fileLoc}' + 'Final_bathymetry_only_Lagoon.csv', index=False)
 
 #bathy_temp[bathy_adj['depth'].isna()] = 0.0
 
@@ -50,10 +51,10 @@ bathy_completa = pd.read_csv(f'{fileLoc}'+'completa_1_128.csv', skiprows=0, head
 xx, yy = np.meshgrid(lon_Adri,lat_Adri)
 
 fig = plt.figure()
-plt.pcolormesh(xx,yy,bathy_adj['depth'].to_numpy().reshape(y_dim,x_dim))
+plt.pcolormesh(xx,yy,bathy_temp['depth'].to_numpy().reshape(y_dim,x_dim))
 plt.colorbar()
 plt.clim(-4, 0.0000)
-plt.savefig(f'{fileLoc}'+'Adjusted_bathymetry')
+plt.savefig(f'{fileLoc}'+'Completa_only_lagoon_bathymetry')
 plt.close()
 
 
