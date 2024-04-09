@@ -2,15 +2,19 @@
 
 Repository to collect the comparison between hydrodynamics in the Adriatic Sea and the same area including the Venice Lagoon.
 
-## 1.DA MATLAB: produrre e scaricare i file
+### Required file: 
+>- Batimetria.dat
 
-    - Batimetria 792 x 424 Adriatico + Laguna (lat, lon, depth) [completa_1_128.bin]
-    - Batimetria 792 x 424 Laguna + Adriatico a zero (lat, lon, depth) [lagoon_ADRIsize.bin]
-    - Batimetria 792 x 424 Adriatico + Laguna a zero [ADRI_1_128_NO_Lagoon.bin]
+
+## 1. create_bathy_ADRI.m: produrre e scaricare i file
+
+    - Bathymetry 792 x 424 Adriatic Sea + Lagoon (lat, lon, depth) [completa_1_128.bin]
+    - Bathymetry 792 x 424 Lagoon + Adriatic Sea set to zero (lat, lon, depth) [lagoon_ADRIsize.bin]
+    - Bathymetry 792 x 424 Adriatic Sea + Lagoon set to zero [ADRI_1_128_NO_Lagoon.bin]
 
 ## 2. file read_bathy.py: 
 
-carica i file .bin provenienti da matlab e li trasforma in csv
+uplloads the .bin files coming from matlab and convert them into .csv
 carica i file di batimetria unstructured e li trasforma nel sistema di riferimento EPSG:4326 (Coarsed2013) 
 
 % NB: la profondità considerata è la prima registrata nei file di batimetrie
