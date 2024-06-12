@@ -24,4 +24,4 @@ fin_ref = "..."
 ```
 
 ### Averaging
-
+The first step of the algorithm used for the averaging consists of the construction of a more refined grid in which each cell of the _original bathymetry_ is sub-divided into _nRef <sup>2</sup>_ sub-cells, where _nRef_ corresponds to the number of refinements desired and its a customizable parameter. Each sub-cell represents a bin of two different histograms that is constructed for each cell. The first histogram records per each sub-cell the number of observations that fall in its area, while the second compute their sum. At this point, the average value is computed dividing the value of the sum by the number of observation per each sub-cell. Once this computation is performed, the value of a further average operation between all the sub-cells is computed and the resulting value is assigned to the original cell. The result of this operation is a matrix with the same dimension as the original grid with in each cell the averaged value of depth coming from the two combined average procedures.
