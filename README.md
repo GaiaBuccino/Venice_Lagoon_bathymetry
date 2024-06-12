@@ -6,7 +6,7 @@ Algorithm that updates the structured bathymetry of the North Adriatic Sea (reso
  - Files (csv format) with depth data to update the original bathymetry, in the following referred as __external files__ ( in the example _Bathy_2003CORILA.csv_ and _Bathy_2013_coarsed.csv_)
 
 ## _average_bathymetry.py_
-The procedure to construct the Venice lagoon updated bathymetry consists of 5 steps: __Pre-processing__ data, __Averaging__ data recorded in the _external files_, __Weighing__ data given their occurrence on the grid-cells, __Adding__ the averaged-weighted bathymetry to the original bthymetry, __Exporting__ the results in different formats.
+The procedure to construct the Venice lagoon updated bathymetry consists of 5 steps: __Pre-processing__ data, __Averaging__ data recorded in the _external files_, __Weighing__ data given their occurrence on the grid-cells, __CLEANING__ OF THE ISOLATED SPOTS, __CONSERVATION__ OF THE VOLUME OF WATER, __Adding__ the averaged-weighted bathymetry to the original bthymetry, __Exporting__ the results in different formats.
 
 To start the procedure, the user has to modify the path where the necessary files are stored _fileLoc_ and the one where the produced files have to be saved _fileDest_:
 ```
@@ -28,3 +28,13 @@ The first step of the algorithm used for the averaging consists of the construct
 
 ### Weighing 
 the weighing operation is performed to take into account the distribution of data in the assignment of the depth value to an entire cell, the depth computed in the averaging step is weighed with respect to the percentage of occurrence of water into each cell. In order to do so, in each cell and for each _external file_ a matrix of boolean representing the occurreces of data considering every sub-cell is constructed (_True_ values means that at least one values falls into the cell, _False_ is assigned in the opposite case) and the union of these matrices with respect to the different _external file_ is computed. The resulting matrix is used to compute the percentage of water covering each cell. If the value computed is under a certain threshold, the cell is converted into land (depth equal to zero). In this way, all the cells that have only a small area covered by water are neglected into the reconstruction of the bathymetry (this allows to avoid enlargement of the surface covered by water through very shallow areas)
+
+###
+
+###
+
+### Adding
+Once the final bathymetry is ready, it is added to the _original bathymetry_ of the North Adriatic Sea given at the beginning through the simple superposition of the values present in the two different files, the _original bathymetry_ and the _lagoon bathymetry_
+
+### Exporting
+The produced files are exported in the .nc and .bin format
