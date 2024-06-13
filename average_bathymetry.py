@@ -262,7 +262,7 @@ def interp_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.Da
         avg_depth.loc[:,avg_depth.longitude[0]] = 0.0
         avg_depth.to_netcdf(fileDest + f'Averaged_depth_{nRef}ref.nc')
         
-        perc = 40
+        perc = 50
         
         filtered_depth = xr.where(global_percentage >= perc/100, global_depth, nan)
         filtered_depth = xr.DataArray(filtered_depth, dims = ["latitude","longitude"], coords = {"latitude":  lat_st, "longitude": lon_st})
@@ -338,7 +338,7 @@ lat_lagoon = lat.sel(latitude= slice(45.12109375,45.589843750)).values
 
 original_files = ['Bathy_2003CORILA', 'Bathy_2013_coarsed'] #
 
-nPt = [8] #minore
+nPt = [3,4,5,6,7,8] #minore
 
 converted_file_list = []
 converted_namefile_list = []
