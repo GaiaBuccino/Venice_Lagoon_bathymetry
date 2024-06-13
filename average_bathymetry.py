@@ -17,44 +17,44 @@ import os
 from typing import List
 
 
-def csv_creation(fileLoc: str, area: str, fileDest: str, x_dim: int, y_dim: int, plot:bool = False):
+# def csv_creation(fileLoc: str, area: str, fileDest: str, x_dim: int, y_dim: int, plot:bool = False):
     
-    """Function that creates the csv files to store data ([lon, lat depth]) starting from files bin
+#     """Function that creates the csv files to store data ([lon, lat depth]) starting from files bin
 
-    Args:
-        fileLoc (str): path of the file
-        area (str): area under analysis (required 'bathy_{area}.bin', 'lat_{area}.bin', 'lon_{area}.bin')  
-        fileDest (str): path where the produced fles have to be saved
-        x_dim (int): points of the grid in the x direction
-        y_dim (int): points of the grid in the y direction
-        plot (bool, optional): variable representing if a plot has to be produced and saved. Defaults to False.
-    """
-    
-
-    fileName = fileLoc + f'bathy_{area}.bin' 
-    #fileLat = fileLoc + f'lat_{area}.bin'
-    # fileLon = fileLoc + f'lon_{area}.bin'   
-
+#     Args:
+#         fileLoc (str): path of the file
+#         area (str): area under analysis (required 'bathy_{area}.bin', 'lat_{area}.bin', 'lon_{area}.bin')  
+#         fileDest (str): path where the produced fles have to be saved
+#         x_dim (int): points of the grid in the x direction
+#         y_dim (int): points of the grid in the y direction
+#         plot (bool, optional): variable representing if a plot has to be produced and saved. Defaults to False.
+#     """
     
 
-    data_bat = np.fromfile(fileName, dtype="<f4", count=-1).reshape(x_dim, y_dim)
-    data_lon = np.fromfile(fileLon, dtype="<f4", count=-1)
-    data_lat = np.fromfile(fileLat, dtype="<f4", count=-1)
+#     fileName = fileLoc + f'bathy_{area}.bin' 
+#     #fileLat = fileLoc + f'lat_{area}.bin'
+#     # fileLon = fileLoc + f'lon_{area}.bin'   
 
-    da_bath = xr.DataArray(name='depth', data =data_bat, dims = ("lat","lon"), coords={"lon": data_lon,"lat": data_lat})  # coords have to be in the same order of the file data_bat
-
-    data_pd = da_bath.to_dataframe()
-    data_pd.to_csv( f'{fileDest}'+f'{area}.csv')
     
-    if plot:
-        plt.pcolormesh(data_bat)
-        plt.colorbar()
-        plt.clim(0,-4)
-        plt.show()
 
-        plt.savefig(f'{fileDest}Bathy_{area}') 
+#     data_bat = np.fromfile(fileName, dtype="<f4", count=-1).reshape(x_dim, y_dim)
+#     data_lon = np.fromfile(fileLon, dtype="<f4", count=-1)
+#     data_lat = np.fromfile(fileLat, dtype="<f4", count=-1)
 
-    return
+#     da_bath = xr.DataArray(name='depth', data =data_bat, dims = ("lat","lon"), coords={"lon": data_lon,"lat": data_lat})  # coords have to be in the same order of the file data_bat
+
+#     data_pd = da_bath.to_dataframe()
+#     data_pd.to_csv( f'{fileDest}'+f'{area}.csv')
+    
+#     if plot:
+#         plt.pcolormesh(data_bat)
+#         plt.colorbar()
+#         plt.clim(0,-4)
+#         plt.show()
+
+#         plt.savefig(f'{fileDest}Bathy_{area}') 
+
+#     return
 
     
 def geom_creation(coord1: np.ndarray, coord2:np.ndarray, structured:bool = False): #-> np.ndarray[Point]
@@ -118,7 +118,7 @@ def change_ref_system(bathy_pd: pd.DataFrame, fileDest: str , fileName:str, init
             bathy_gpd_converted.insert(1, "lat", lat_converted)
             bathy_gpd_converted.rename(columns={0: "lon", 1: "lat", 3:"depth", "geometry": "geometry"}, inplace = True)
             #bathy_gpd_final['depth'].loc[bathy_gpd_final.depth > 0] = 0.0
-            bathy_gpd_converted.loc[bathy_gpd_converted["depth"] > 0.0, "depth"] = nan
+            bathy_gpd_converted.loc[bathy_gpd_converted["depth"] > 0.0, "depth"] = 0.0
             #bathy_gpd_final[bathy_gpd_final.depth > 0] = 0.0
             bathy_gpd_converted.to_csv(fileDest +f'{fileName}_{final_ref}.csv', header= ['lon','lat','depth', 'geometry'], index=False)
 
@@ -128,7 +128,7 @@ def change_ref_system(bathy_pd: pd.DataFrame, fileDest: str , fileName:str, init
             bathy_gpd_converted.insert(0, "lon", lon_converted)
             bathy_gpd_converted.insert(1, "lat", lat_converted)
             bathy_gpd_converted.rename(columns={0: "lon", 1: "lat", 2:"depth", "geometry": "geometry"}, inplace = True)
-            bathy_gpd_converted.loc[bathy_gpd_converted["depth"] > 0.0, "depth"] = nan     #per sicurezza
+            bathy_gpd_converted.loc[bathy_gpd_converted["depth"] > 0.0, "depth"] = 0.0    #per sicurezza
             bathy_gpd_converted.to_csv(fileDest +f'{fileName}_{final_ref}.csv', header= ['lon','lat','depth', 'geometry'], index=False)
 
     return f'{fileName}_{final_ref}'        #lat_fref, lon_fref, depths, bathy_gpd_final
@@ -252,7 +252,7 @@ def interp_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.Da
                     global_depth[jj][ii] = (np.nansum(loc_depth)/(nRef)**2) / present_in_file 
 
                 else:
-                    global_depth[jj][ii] = 0
+                    global_depth[jj][ii] = nan
 
                 print('global percentage equal to ', global_percentage[jj][ii])
                 print('global depth equal to ', global_depth[jj][ii])
@@ -283,18 +283,6 @@ def interp_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.Da
         np.save(f'{fileDest}'+f'Total_filtered_percentage_{nRef}ref.npy', filtered_percentage.mask)
 
         plt.figure()
-        plt.pcolormesh(occ_percentage_np)
-        plt.colorbar()
-
-        plt.savefig(fileDest + f'Water_coverage_{perc}perc_{nRef}ref', bbox_inches = 'tight', pad_inches = 0)
-        plt.close() 
-
-        np.save(f'{fileDest}'+f'Total_filtered_percentage_{nRef}ref.npy', filtered_percentage.mask)
-
-        #####
-        #plot of the masked depths
-
-        plt.figure()
         plt.pcolormesh(filtered_percentage)
         plt.colorbar()
 
@@ -318,28 +306,39 @@ def interp_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.Da
 #####################
 
 
-fileLoc = '/g100/home/userexternal/gbuccino/Venice_Lagoon_hydrodynamics/'
+fileLoc = '/g100/home/userexternal/gbuccino/Venice_Lagoon_bathymetry/'
 fileDest = '/g100_scratch/userexternal/gbuccino/lagoon_analysis/Data_preparation/' 
 
 dataset = xr.open_dataset(fileLoc + 'bathy_ADRI_CADEAU_NS.nc')
-bathymetry = dataset['depth'] 
+original_bathymetry = dataset['depth'] 
+#original_bathymetry= xr.where(original_bathymetry == 0, nan, original_bathymetry)
+
+plt.figure()
+plt.pcolormesh(original_bathymetry, vmax = -0.001)
+plt.colorbar()
+plt.savefig(fileDest + f'Original_bathymetry', bbox_inches = 'tight', pad_inches = 0)
+plt.close() 
+
 NAS_bathymetry = dataset['depth'] 
 lon = dataset['longitude']
 lat = dataset['latitude']
 
+plt.figure()
+plt.pcolormesh(NAS_bathymetry, vmax = -0.001)
+plt.colorbar()
+plt.savefig(fileDest + f'NAS_Original_bathymetry', bbox_inches = 'tight', pad_inches = 0)
+plt.close() 
 # bathymetry.plot(vmin = -1.0, vmax =0.0)
 # plt.savefig("bathy_ADRI_CADEAU_NS")
 
-
-
-bathy_lagoon = bathymetry.sel(longitude = slice(12.22265625, 12.691406250), latitude= slice(45.12109375,45.589843750))
-bathy_lagoon = bathy_lagoon*0.0
+bathy_lagoon = original_bathymetry.sel(longitude = slice(12.22265625, 12.691406250), latitude= slice(45.12109375,45.589843750))
+bathy_lagoon = bathy_lagoon* 100
 lon_lagoon = lon.sel(longitude = slice(12.22265625, 12.691406250)).values
 lat_lagoon = lat.sel(latitude= slice(45.12109375,45.589843750)).values
 
 original_files = ['Bathy_2003CORILA', 'Bathy_2013_coarsed'] #
 
-nPt = [3,4,5,6,7,8] #minore
+nPt = [8] #minore
 
 converted_file_list = []
 converted_namefile_list = []
@@ -357,11 +356,17 @@ for file in original_files:
     converted_namefile_list.append(new_name)
 
 for nPt_int in nPt:
-    perc = 40
-    bathy_lagoon, filtered_depth = interp_on_structured(lon_lagoon, lat_lagoon, converted_file_list, converted_namefile_list, nPt_int, fileDest, perc)
 
+    perc = 50
+    bathy_lag, filtered_depth = interp_on_structured(lon_lagoon, lat_lagoon, converted_file_list, converted_namefile_list, nPt_int, fileDest, perc)
+
+    plt.figure()
+    plt.pcolormesh(filtered_depth, vmax = -0.001)
+    plt.colorbar()
+    plt.savefig(fileDest + f'Filtered_depths_{perc}perc_OUT_FUNC_{nPt_int}', bbox_inches = 'tight', pad_inches = 0)
+    plt.close() 
     #new_masked_bathy = xr.open_dataset(fileDest + f'Bathymetry_masked_{perc}perc_{nPt_int-1}ref.nc')
-    new_masked_bathymetry = np.ma.masked_where(filtered_depth > - 0.2, filtered_depth)
+    #new_masked_bathymetry = np.ma.masked_where(filtered_depth > - 0.2, filtered_depth)
     
     # np.save(f'{fileDest}'+f'Averaged_depths_{nPt_int-1}ref.npy', new_masked_bathy.data)
     # np.save(f'{fileDest}'+f'Mask_depths_{nPt_int-1}ref.npy', new_masked_bathy.mask)
@@ -379,13 +384,24 @@ for nPt_int in nPt:
     # plt.savefig(fileDest + f"Lagoon_avg_bathymetry_{nPt_int-1}ref", bbox_inches = 'tight', pad_inches = 0)
     # plt.close()
 
+    plt.figure()
+    plt.pcolormesh(original_bathymetry, vmax = -0.001)
+    plt.colorbar()
+    plt.savefig(fileDest + f'bathy-PRE_outSUM_{perc}perc__{nPt_int}', bbox_inches = 'tight', pad_inches = 0)
+    plt.close() 
+
     with xr.set_options(arithmetic_join="outer"):
-        bathymetry = bathymetry + filtered_depth
+        bathymetry = filtered_depth + original_bathymetry
+
+    plt.figure()
+    plt.pcolormesh(bathymetry, vmax = -0.001)
+    plt.colorbar()
+    plt.savefig(fileDest + f'BATHYMETRY_{perc}perc_OUT_FUNC_{nPt_int}', bbox_inches = 'tight', pad_inches = 0)
+    plt.close() 
 
     bathymetry= xr.where(bathymetry != bathymetry, NAS_bathymetry, bathymetry)
     #bathymetry= xr.where(bathymetry > -0.2, nan, NAS_bathymetry)
     
-
     bathymetry.loc[:,bathymetry.longitude[0]] = 0.0
 
     bathymetry.loc[bathymetry.latitude[219],bathymetry.longitude[0]:bathymetry.longitude[6]] = 0.0
@@ -402,10 +418,8 @@ for nPt_int in nPt:
     # x = 45, y = 264
     # x = 46, y = [257, 264]
 
-
     bathymetry.to_netcdf(fileDest + f'NAS_lagoon_bathymetry_{nPt_int-1}ref_{perc}perc.nc')
     bathymetry.values.astype('f4').tofile(fileDest + f'NAS_lagoon_bathymetry_{nPt_int-1}ref_{perc}perc.bin')
-
 
     fig = plt.figure()
     bathymetry.plot(vmin = -1.5, vmax =-0.001)
