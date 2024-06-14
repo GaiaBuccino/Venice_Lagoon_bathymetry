@@ -3,15 +3,15 @@ Algorithm that updates the structured bathymetry of the North Adriatic Sea (reso
 
 ## Required files
  - Bathymetry of the North Adriatic Sea (netCDF format) on which the Venice lagoon bathymetry is innested, in the following referred as __original bathymetry__ (in the example _bathy_ADRI_CADEAU_NS.nc_)
- - Files (csv format) with depth data to update the original bathymetry, in the following referred as __external files__ ( in the example _Bathy_2003CORILA.csv_ and _Bathy_2013_coarsed.csv_)
+ - Files (csv format) with depth data to update the original bathymetry, in the following referred as __external files__ (in the example _Bathy_2003CORILA.csv_ and _Bathy_2013_coarsed.csv_)
 
 ## _average_bathymetry.py_
 The procedure to construct the Venice lagoon updated bathymetry consists of 5 steps: __Pre-processing__ data, __Averaging__ data recorded in the _external files_, __Weighing__ data given their occurrence on the grid-cells, __CLEANING__ OF THE ISOLATED SPOTS, __CONSERVATION__ OF THE VOLUME OF WATER, __Adding__ the averaged-weighted bathymetry to the original bthymetry, __Exporting__ the results in different formats.
 
 To start the procedure, the user has to modify the path where the necessary files are stored _fileLoc_ and the one where the produced files have to be saved _fileDest_:
 ```
-fileLoc = ''
-fileDest = '' 
+fileLoc = '...'
+fileDest = '...' 
 ```
 
 In the following each step is described in details:
@@ -38,3 +38,17 @@ Once the final bathymetry is ready, it is added to the _original bathymetry_ of 
 
 ### Exporting
 The produced files are exported in the .nc and .bin format
+
+## Remark: External files
+
+
+La profondità della batimetria della nuova griglia Venlag 64 si riferisce allo ZERO IGM (1942). Le profondità degli elementi triangolari della griglia sono stati calcolati attraverso la procedura seguente:
+1.) il dataset Corila 2003 (che si riferisce allo ZERO IGM di 1942) è stato utilizzato per interpolare linearmente le profondità sui nodi di una griglia regolare di risoluzione 20 metri (creando un dataset di profondità che chiamiamo Corila-2003-gridded) che copre tutto il dominio di calcolo.
+2.) ad ogni elemento triangolare della griglia Venlag 64 è stato assegnato la profondità media dei punti della griglia regolare (Corila-2003-gridded) contenuti nell'elemento triangolare della griglia Venlag 64.
+3.) Il dataset 2013 (DOI: 10.1594/IEDA/323605) contiene dati di profondità di altissima risoluzione nei canali della laguna, si riferisce per le profondità al livello Punta Salute. Perciò, le profondità di questo dataset sono state aumentate di 23.5 cm per tenere in conto la differenza di profondità tra il Livello Punta Salute e lo zero IGM 1942.
+4.) Poi, solo un punto ogni 5 punti in ogni direzione lat/lon del dataset 2013 (relativo allo zero IGM 1942) sono stati estratti (utilizzare la totalità dei dati avrebbe richiesto troppo tempo di calcolo) per creare una griglia intermedia che possiamo chiamare Coarsed-2013-Bati-IGM.
+
+5.) In seguito, ogni elemento triangolare della griglia Venlag 64 per il quale almeno 75% della propria superficia era coperta dai dati della griglia Coarsed-2013-Bati-IGM, la profondità è stata aggiornata per essere uguale alla profondità media dei punti della griglia Coarsed-2013-Bati-IGM contenuti nell'elemento triangolare della griglia Venlag 64. 
+6) Dove meno di 75% della superficie dell'elemento triangolare era sovrapposto con il dataset Coarsed-2013-Bati-IGM, una media ponderata tra i dati Corila-2003-gridded e i dati Coarsed-2013-Bati-IGM è stata calcolata.
+7) Dove nessun dato di batimetria dei dataset 2003 o 2013 era disponibile, la profondità è stata interpolata linearmente dai dati di profondità della griglia Shelflag.
+
