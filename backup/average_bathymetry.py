@@ -238,6 +238,7 @@ def interp_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.Da
                 for nloc in np.arange(1,len(files)):
 
                     loc_mask = np.logical_or(loc_mask, loc_bool_occs[nloc])
+
                     if loc_bool_occs[0].sum()>0:
                         present_in_file = present_in_file + 1
 
@@ -246,13 +247,14 @@ def interp_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.Da
 
                     loc_depth = np.ma.array((loc_depth, loc_depths[nloc])).sum(axis=0)
 
-                global_percentage[jj][ii] = loc_mask.sum()/(nRef)**2
-                
+
                 if present_in_file !=0:
                     global_depth[jj][ii] = (np.nansum(loc_depth)/(nRef)**2) / present_in_file 
 
                 else:
                     global_depth[jj][ii] = nan
+
+                global_percentage[jj][ii] = loc_mask.sum()/(nRef)**2
 
                 print('global percentage equal to ', global_percentage[jj][ii])
                 print('global depth equal to ', global_depth[jj][ii])
