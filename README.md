@@ -71,3 +71,7 @@ The produced files are exported in the .nc and .bin format
 - _Bathy_2013_coarsed.csv:_ data are referred to the zero of Punta Salute, so they need to be rescaled to be referred to the zero of IGM 1942. This is done by adding 0.243 to each value of depth 
 
 _see Bathymetry_scaling.pdf for details and visual explanation_
+
+### Visualization
+Open _Venice_avg_cleaned_bathymetry.qgz_ to visualize the results produced for the case under analysis
+
