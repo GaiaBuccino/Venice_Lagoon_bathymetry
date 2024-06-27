@@ -76,4 +76,4 @@ The produced files are exported in the .nc and .bin format
 - _Bathy_CORILA2003.csv:_ contains data collected with respect to the Geographic Military Institute zero in the third column (index 2 in python) and with respect to the zero of Punta Salute in the last column
 - _Bathy_2013_coarsed.csv:_ data are referred to the zero of Punta Salute, so they need to be rescaled to be referred to the zero of IGM 1942. This is done by adding 0.243 to each value of depth 
 
-_see Bathymetry_scaling for details and visual explanation_
+_see Bathymetry_scaling.pdf for details and visual explanation_
