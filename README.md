@@ -41,7 +41,7 @@ Each cell is categorized into a categorical variable as follows:
 >
 >**1**  REMOVED CELL: not significant
 >
->**2**  REMOVED CELL: water coverage <20%
+>**2**  REMOVED CELL: water coverage < 20% (customizable value changing the value of the variable _min_percentage_)
 >
 >**3**  REMOVED CELL: depth value given
 >
@@ -53,9 +53,15 @@ Each cell is categorized into a categorical variable as follows:
 >
 >**7** REMOVED CELL: depth less than hFac
 >
->**8** REMOVED CELL: closure of the domain 
+>**8** REMOVED CELL: closure of the domain
 
-###
+This operation is ad hoc for each case and is performed introducing 
+>__operation__.loc[operation.latitude[_latitude index_],operation.longitude[_longitude index_]] = _correspondent value_
+>__operation__.loc[operation.latitude[_initial_latitude index_]:operation.latitude[_final_latitude index_],operation.longitude[_initial_longitude index_]:operation.longitude[_final_longitude index_]] = _correspondent value_
+>
+The same modifications has to be done on the __bathy__ variable
+
+<ins>Remark:</ins> values 3 and 4 have been introduced to guarantee the conservation of the volume of water. This is done adding the value of the depth of some particular cells to the one adiacent, based on the necessity to avoid the connection of cells or to represent land cells without neglecting important water channels
 
 ### ADDING
 Once the final bathymetry is ready, it is added to the _original bathymetry_ of the North Adriatic Sea given at the beginning through the simple superposition of the values present in the two different files, the _original bathymetry_ and the _lagoon bathymetry_
@@ -63,9 +69,11 @@ Once the final bathymetry is ready, it is added to the _original bathymetry_ of 
 ### EXPORTING
 The produced files are exported in the .nc and .bin format
 
-## _Final Remark_
-About Data
+### Final Remarks
+<ins>About Data</ins>
 
+- _original structured bathymetry:_ data are collected with respect to the Geographic Military Institute zero, called Genova 1942
+- _Bathy_CORILA2003.csv:_ contains data collected with respect to the Geographic Military Institute zero in the 
 
 La profondità della batimetria della nuova griglia Venlag 64 si riferisce allo ZERO IGM (1942). Le profondità degli elementi triangolari della griglia sono stati calcolati attraverso la procedura seguente:
 1.) il dataset Corila 2003 (che si riferisce allo ZERO IGM di 1942) è stato utilizzato per interpolare linearmente le profondità sui nodi di una griglia regolare di risoluzione 20 metri (creando un dataset di profondità che chiamiamo Corila-2003-gridded) che copre tutto il dominio di calcolo.
