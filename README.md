@@ -5,6 +5,18 @@ Algorithm that updates the structured bathymetry of the North Adriatic Sea (reso
  - Bathymetry of the North Adriatic Sea (netCDF format) on which the Venice lagoon bathymetry is innested, in the following referred as _original bathymetry_ (in this example _bathy_ADRI_CADEAU_NS.nc_)
  - Files (csv format) with depth data to update the original bathymetry, in the following referred as _external files_ (in this example _Bathy_2003CORILA.csv_ and _Bathy_2013_coarsed.csv_)
 
+## Required packages
+
+- pandas
+- geopandas
+- matplotlib
+- numpy 
+- xarray 
+- shapely.geometry
+- math
+- os
+- typing
+
 ## _average_bathymetry.py_
 The procedure to construct the Venice lagoon updated bathymetry consists of 5 steps: __Pre-processing__ data, __Averaging__ data recorded in the _external files_, __Weighing__ data given their occurrence on the grid-cells, __Cleaning__ of critical points (clusters of solated points, land points, boundary points), __Adding__ the averaged-weighted bathymetry to the original bthymetry, __Exporting__ the results in different formats.
 
