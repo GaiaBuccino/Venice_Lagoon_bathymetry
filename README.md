@@ -12,38 +12,59 @@ To start the procedure, the user has to modify the path where the necessary file
 
 In the following each step is described in details:
 
-### Pre-processing
+### PRE-PROCESSING 
 The first step fulfilled is the conversion of the reference system of coordinates of the _external files_ in order to be comparable with the _original bathymetry_ data. To do so, all the _external files_ are converted into GeoDataFrame to exploit the built-in function that automatically convert the coordinate reference system (to_crs()). The initial and final reference system have to be specified changing the values of the variables _init_ref_ representing the initial reference system and _fin_ref_ that is the final one
 
 >init_ref = "3004"
 >
 >fin_ref = "4326"
 
+(_SEE THE FINAL REMARK FOR DETAILS ABOUT DATA_)
 
-
-### Averaging
+### AVERAGING
 The first step of the algorithm used for the averaging consists of the construction of a more refined grid in which each cell of the _original bathymetry_ is sub-divided into _nRef <sup>2</sup>_ sub-cells, where _nRef_ corresponds to the number of refinements desired and its a customizable parameter.
 
-> nRef = 7 that represents the largest values to create sub-cells that surely contains points of the _external files_.
+> nRef = 7 
 > 
-> This value depends on the density of samplings contained in the unstructured files.
+> This value depends on the density of samplings contained in the unstructured files, it is the largest value to certainly capture external data in each sub-cells (in area where data are present).
 
-Each sub-cell represents a bin of two different histograms that is constructed for each cell. The first histogram records per each sub-cell the number of observations that fall in its area, while the second compute sum of the latters. At this point, the average value is computed dividing the value of the sum by the number of observation per each sub-cell. Once this computation is performed, the value of a further average operation between all the sub-cells is computed and the resulting value is assigned to the original cell. The result of this operation is a matrix with the same dimension as the original grid with in each cell the averaged value of depth coming from the two combined average procedures.
+Each sub-cell represents a bin of two different histograms that are constructed for each cell. The first histogram records per each sub-cell the number of observations that fall in its area, while the second compute the sum of the latters. At this point, the average value is computed dividing the value of the sum by the number of observation per each sub-cell. Once this computation is performed, the value of a further average (sum of the values in each sub-cell / nRef <sup>2</sup>) operation between all the sub-cells is computed and the resulting value is assigned to the original cell. The output of this operation is a matrix with the same dimension as the original grid containing in each cell the averaged value of depth coming from the two combined average procedures.
 
-### Weighing 
-the weighing operation is performed to take into account the distribution of data in the assignment of the depth value to an entire cell, the depth computed in the averaging step is weighed with respect to the percentage of occurrence of water into each cell. In order to do so, in each cell and for each _external file_ a matrix of boolean representing the occurreces of data considering every sub-cell is constructed (_True_ values means that at least one values falls into the cell, _False_ is assigned in the opposite case) and the union of these matrices with respect to the different _external file_ is computed. The resulting matrix is used to compute the percentage of water covering each cell. If the value computed is under a certain threshold, the cell is converted into land (depth equal to zero). In this way, all the cells that have only a small area covered by water are neglected into the reconstruction of the bathymetry (this allows to avoid enlargement of the surface covered by water through very shallow areas)
+### WEIGHING 
+The weighing operation is performed to take into account the distribution of data in the decision of the caracterization of each cell (water or land), the depth values computed in the averaging step is weighed with respect to the percentage of occurrence of water into each cell. In order to do so, in each cell and for each _external file_ a matrix of boolean representing the occurreces of data considering every sub-cell is constructed (_True_ values means that at least one values falls into the cell, _False_ is assigned in the opposite case) and the union of these matrices with respect to the different _external file_ is computed. The resulting matrix is used to compute the percentage of water covering each cell. If the value computed is under a certain threshold, the cell is converted into land (depth equal to zero). In this way, all the cells that have only a small area covered by water are neglected into the reconstruction of the bathymetry (this allows to avoid enlargement of the surface covered by water through very shallow areas)
+
+### CLEANING
+The cleaning procedure consists in the visual correction of the outcome of the previous operations in order to have a result consistent with the reality.
+Each cell is categorized into a categorical variable as follows:
+
+>**0**  PRESENT CELL: not touched
+>
+>**1**  REMOVED CELL: not significant
+>
+>**2**  REMOVED CELL: water coverage <20%
+>
+>**3**  REMOVED CELL: depth value given
+>
+>**4** REMOVED CELL: depth value received
+>
+>**5** REMOVED CELL: depth value manually changed
+>
+>**6** REMOVED CELL: superposition with original bathymetry
+>
+>**7** REMOVED CELL: depth less than hFac
+>
+>**8** REMOVED CELL: closure of the domain 
 
 ###
 
-###
-
-### Adding
+### ADDING
 Once the final bathymetry is ready, it is added to the _original bathymetry_ of the North Adriatic Sea given at the beginning through the simple superposition of the values present in the two different files, the _original bathymetry_ and the _lagoon bathymetry_
 
-### Exporting
+### EXPORTING
 The produced files are exported in the .nc and .bin format
 
-## Remark: External files
+## _Final Remark_
+About Data
 
 
 La profondità della batimetria della nuova griglia Venlag 64 si riferisce allo ZERO IGM (1942). Le profondità degli elementi triangolari della griglia sono stati calcolati attraverso la procedura seguente:
