@@ -19,7 +19,7 @@ The first step fulfilled is the conversion of the reference system of coordinate
 >
 >fin_ref = "4326"
 
-(_SEE THE FINAL REMARK FOR DETAILS ABOUT DATA_)
+(_See the final remarks for more details about data_)
 
 ### AVERAGING
 The first step of the algorithm used for the averaging consists of the construction of a more refined grid in which each cell of the _original bathymetry_ is sub-divided into _nRef <sup>2</sup>_ sub-cells, where _nRef_ corresponds to the number of refinements desired and its a customizable parameter.
@@ -37,33 +37,22 @@ The weighing operation is performed to take into account the distribution of dat
 The cleaning procedure consists in the visual correction of the outcome of the previous operations in order to have a result consistent with the reality.
 Each cell is categorized into a categorical variable as follows:
 
-| Syntax      | Description | Test Text     |
-| :---        |    :----:   |          ---: |
-| Header      | Title       | Here's this   |
-| Paragraph   | Text        | And more      |
+| Value     |Present/Removed | Reason  |
+| :---      |       :----:       |    :----    |
+| **0**     | P       | Water cell |
+| **1**     | R       | Not significant |
+| **2**     | R       | Water coverage < 20% |
+| **3**     | R       | Depth value given     |
+| **4**     | P       | Depth value received   |
+| **5**     | P       | Depth value manually changed      |
+| **6**     | R       | Superposition with _original bathymetry_   |
+| **7**     | R       | Depth value less than threshold      |
+| **8**     | R       | Closure of the domain     |
 
-- **0**  -> not touched
->
->**1**  REMOVED CELL: not significant
->
->**2**  REMOVED CELL: water coverage < 20% (customizable value changing the value of the variable _min_percentage_)
->
->**3**  REMOVED CELL: depth value given
->
->**4** REMOVED CELL: depth value received
->
->**5** REMOVED CELL: depth value manually changed
->
->**6** REMOVED CELL: superposition with original bathymetry
->
->**7** REMOVED CELL: depth less than hFac
->
->**8** REMOVED CELL: closure of the domain
 
 This operation is ad hoc for each case and is performed introducing 
 >__operation__.loc[operation.latitude[_latitude index_],operation.longitude[_longitude index_]] = _correspondent value_
->__operation__.loc[operation.latitude[_initial_latitude index_]:operation.latitude[_final_latitude index_],operation.longitude[_initial_longitude index_]:operation.longitude[_final_longitude index_]] = _correspondent value_
->
+
 The same modifications has to be done on the __bathy__ variable
 
 <ins>Remark:</ins> values 3 and 4 have been introduced to guarantee the conservation of the volume of water. This is done adding the value of the depth of some particular cells to the one adiacent, based on the necessity to avoid the connection of cells or to represent land cells without neglecting important water channels
