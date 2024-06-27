@@ -9,9 +9,9 @@ Algorithm that updates the structured bathymetry of the North Adriatic Sea (reso
 
 - pandas
 - geopandas
+- xarray 
 - matplotlib
 - numpy 
-- xarray 
 - shapely.geometry
 - math
 - os
