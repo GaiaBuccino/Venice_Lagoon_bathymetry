@@ -72,16 +72,7 @@ The produced files are exported in the .nc and .bin format
 ### Final Remarks
 <ins>About Data</ins>
 
-- _original structured bathymetry:_ data are collected with respect to the Geographic Military Institute zero, called Genova 1942
-- _Bathy_CORILA2003.csv:_ contains data collected with respect to the Geographic Military Institute zero in the 
-
-La profondità della batimetria della nuova griglia Venlag 64 si riferisce allo ZERO IGM (1942). Le profondità degli elementi triangolari della griglia sono stati calcolati attraverso la procedura seguente:
-1.) il dataset Corila 2003 (che si riferisce allo ZERO IGM di 1942) è stato utilizzato per interpolare linearmente le profondità sui nodi di una griglia regolare di risoluzione 20 metri (creando un dataset di profondità che chiamiamo Corila-2003-gridded) che copre tutto il dominio di calcolo.
-2.) ad ogni elemento triangolare della griglia Venlag 64 è stato assegnato la profondità media dei punti della griglia regolare (Corila-2003-gridded) contenuti nell'elemento triangolare della griglia Venlag 64.
-3.) Il dataset 2013 (DOI: 10.1594/IEDA/323605) contiene dati di profondità di altissima risoluzione nei canali della laguna, si riferisce per le profondità al livello Punta Salute. Perciò, le profondità di questo dataset sono state aumentate di 23.5 cm per tenere in conto la differenza di profondità tra il Livello Punta Salute e lo zero IGM 1942.
-4.) Poi, solo un punto ogni 5 punti in ogni direzione lat/lon del dataset 2013 (relativo allo zero IGM 1942) sono stati estratti (utilizzare la totalità dei dati avrebbe richiesto troppo tempo di calcolo) per creare una griglia intermedia che possiamo chiamare Coarsed-2013-Bati-IGM.
-
-5.) In seguito, ogni elemento triangolare della griglia Venlag 64 per il quale almeno 75% della propria superficia era coperta dai dati della griglia Coarsed-2013-Bati-IGM, la profondità è stata aggiornata per essere uguale alla profondità media dei punti della griglia Coarsed-2013-Bati-IGM contenuti nell'elemento triangolare della griglia Venlag 64. 
-6) Dove meno di 75% della superficie dell'elemento triangolare era sovrapposto con il dataset Coarsed-2013-Bati-IGM, una media ponderata tra i dati Corila-2003-gridded e i dati Coarsed-2013-Bati-IGM è stata calcolata.
-7) Dove nessun dato di batimetria dei dataset 2003 o 2013 era disponibile, la profondità è stata interpolata linearmente dai dati di profondità della griglia Shelflag.
+- _original structured bathymetry:_ data are collected with respect to the Geographic Military Institute zero, called Genova 1942 (IGM 1942)
+- _Bathy_CORILA2003.csv:_ contains data collected with respect to the Geographic Military Institute zero in the third column (index 2 in python) and with respect to the zero of Punta Salute in the last column
+- _Bathy_2013_coarsed.csv:_ data are referred to the zero of Punta Salute, so they need to be rescaled to be referred to the zero of IGM 1942. This is done by adding 0.243 to each value of depth 
 
