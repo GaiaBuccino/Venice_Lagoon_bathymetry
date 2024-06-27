@@ -37,7 +37,12 @@ The weighing operation is performed to take into account the distribution of dat
 The cleaning procedure consists in the visual correction of the outcome of the previous operations in order to have a result consistent with the reality.
 Each cell is categorized into a categorical variable as follows:
 
->**0**  PRESENT CELL: not touched
+| Syntax      | Description | Test Text     |
+| :---        |    :----:   |          ---: |
+| Header      | Title       | Here's this   |
+| Paragraph   | Text        | And more      |
+
+- **0**  -> not touched
 >
 >**1**  REMOVED CELL: not significant
 >
