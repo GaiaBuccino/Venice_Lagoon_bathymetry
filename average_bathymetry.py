@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 import os
 from typing import List
+from scipy.interpolate import Rbf
 
 
 """ This script performs the addition of a bathymetry described in unstructured, external csv files to an existing structured bathymetry.
@@ -352,10 +353,14 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
                 # RM: ref_ = refined grid
                 ref_lon= np.linspace(lonbins[ii],lonbins[ii+1],pt)
                 ref_lat = np.linspace(latbins[jj],latbins[jj+1],pt)
+                ref_lonlat_meshgrid=np.array(np.meshgrid(ref_lon, ref_lat))
+                ref_lon_grid_flat=ref_lonlat_meshgrid[0].flatten()
+                ref_lat_grid_flat=ref_lonlat_meshgrid[1].flatten()
+                ref_Z_grid_flat=np.zeros((np.shape(ref_lon_grid_flat)))
                 ref_depths_files = []                                   # List of matrices containing depths corresponding to the cells in the refined grid
                 ref_presence_files = []                                 # List of matrices with 1 if there exists values in the refined cell, 0 else
                 ref_occ_files = []                                 # List of matrices with 1 if there exists values in the refined cell, 0 else
-                   
+                where=np.array(list(zip(ref_lonlat_meshgrid[0].flatten(),ref_lonlat_meshgrid[1].flatten() )))
 
                 for nfile in np.arange(len(files)):                     # Loop over unstructured data files 
                     
@@ -369,17 +374,21 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
                     lats_un = latitudes_un[nfile]
                     lons_un = longitudes_un[nfile]
                     deps_un = depths_un[nfile]
+                    Z_un=np.zeros((len(lats_un)))
                     
                     # Contruction of two histograms: occurrence and summation with unstructured values into structured bins
-                    
+                    if(nfile==0):
+                        rbfi=Rbf(lons_un,lats_un,Z_un,deps_un,smooth=0,function='linear')
+                        flatten_values=rbfi(ref_lon_grid_flat,ref_lat_grid_flat,ref_Z_grid_flat)
+                        ref_depth=flatten_values.reshape(pt,pt)
+                    else:
+                        ref_sum, lonedgesw, latedgesw = np.histogram2d(lons_un, lats_un, bins = [ref_lon,ref_lat], weights=deps_un)
+                        ref_sum = ref_sum.T
+                        # Computation of the mean                
+                        ref_depth[ref_occ != 0] = ref_sum[ref_occ != 0]/ref_occ[ref_occ != 0]
                     ref_occ, lonedges, latedges = np.histogram2d(lons_un, lats_un, bins = [ref_lon,ref_lat])
-                    ref_sum, lonedgesw, latedgesw = np.histogram2d(lons_un, lats_un, bins = [ref_lon,ref_lat], weights=deps_un)
                     ref_occ = ref_occ.T
-                    ref_sum = ref_sum.T
 
-                    # Computation of the mean                
-                    
-                    ref_depth[ref_occ != 0] = ref_sum[ref_occ != 0]/ref_occ[ref_occ != 0]
                     ref_depths_files.append(ref_depth)
                     ref_occ_files.append(ref_occ)
 
@@ -399,8 +408,8 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
                     ref_presence_init = ref_presence_files[nloc]
                     ref_depth_init = ref_depths_files[nloc]
                   else:
-                    ref_presence_init[ref_occ_files[nloc]>0]=ref_presence_files[nloc][ref_presence_files[nloc]>0]  # CL
-                    ref_depth_init[ref_occ_files[nloc]>0]=ref_depths_files[nloc][ref_presence_files[nloc]>0]  # CL
+                    ref_presence_init[ref_occ_files[nloc]>0]=ref_presence_files[nloc][ref_occ_files[nloc]>0]  # CL
+                    ref_depth_init[ref_occ_files[nloc]>0]=ref_depths_files[nloc][ref_occ_files[nloc]>0]  # CL
                 ref_presence_init=ref_presence_init>0
 
                 #  for nloc in np.arange(0,len(files)):
