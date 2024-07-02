@@ -83,7 +83,8 @@ def change_reference(pd_bathy: pd.DataFrame, fileDest: str , fileName:str, initi
             
         elif fileName == 'Bathy_2013_coarsed':
 
-            depth_IGM = gpd_bathy_nr[2] + 0.0243        # Conversion of data taken wrt Punta Salute into data wrt IGM 1942
+            #depth_IGM = gpd_bathy_nr[2] + 0.0243        # Conversion of data taken wrt Punta Salute into data wrt IGM 1942
+            depth_IGM = gpd_bathy_nr[2] - 0.243        # Conversion of data taken wrt Punta Salute into data wrt IGM 1942
 
         gpd_df = {"lon": lon_nr, "lat": lat_nr, "depth": depth_IGM}
         gpd_bathy_nr = pd.DataFrame(gpd_df)
@@ -353,6 +354,7 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
                 ref_lat = np.linspace(latbins[jj],latbins[jj+1],pt)
                 ref_depths_files = []                                   # List of matrices containing depths corresponding to the cells in the refined grid
                 ref_presence_files = []                                 # List of matrices with 1 if there exists values in the refined cell, 0 else
+                ref_occ_files = []                                 # List of matrices with 1 if there exists values in the refined cell, 0 else
                    
 
                 for nfile in np.arange(len(files)):                     # Loop over unstructured data files 
@@ -379,6 +381,7 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
                     
                     ref_depth[ref_occ != 0] = ref_sum[ref_occ != 0]/ref_occ[ref_occ != 0]
                     ref_depths_files.append(ref_depth)
+                    ref_occ_files.append(ref_occ)
 
                     # Counting presence (construction of a boolean matrix to count filled cells)
 
@@ -387,34 +390,35 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
 
                 ### WEIGHING ###
                 
-                ref_presence_init = ref_presence_files[0]
-                ref_presence_init_sum = ref_presence_files[0]                                              
-                ref_depth_init = ref_depths_files[0]
                 present_in_file = 0
 
-                for nloc in np.arange(1,len(files)):
+                for nloc in np.arange(0,len(files)):
+                  if ref_presence_files[nloc].sum() > 0:
+                    present_in_file = present_in_file + 1
+                  if(nloc == 0):
+                    ref_presence_init = ref_presence_files[nloc]
+                    ref_depth_init = ref_depths_files[nloc]
+                  else:
+                    ref_presence_init[ref_occ_files[nloc]>0]=ref_presence_files[nloc][ref_presence_files[nloc]>0]  # CL
+                    ref_depth_init[ref_occ_files[nloc]>0]=ref_depths_files[nloc][ref_presence_files[nloc]>0]  # CL
+                ref_presence_init=ref_presence_init>0
 
-                    ref_presence_init = np.logical_or(ref_presence_init, ref_presence_files[nloc])
-
-                    if nloc == 1 and ref_presence_files[0].sum() > 0:                                              
-                        
-                        present_in_file = present_in_file + 1
-
-                    if ref_presence_files[nloc].sum() > 0:
-                        
-                        present_in_file = present_in_file + 1
-
-                    ref_depth_init = np.ma.array((ref_depth_init, ref_depths_files[nloc])).sum(axis=0)
-                    ref_presence_init_sum = ref_presence_init_sum + ref_presence_files[nloc]                            
-                
-                ref_depth_init = ref_depth_init / ref_presence_init_sum                                              
+                #  for nloc in np.arange(0,len(files)):
+                #    if ref_presence_files[nloc].sum() > 0:
+                #      present_in_file = present_in_file + 1
+                #    if(nloc == 0):
+                #      ref_presence_init = ref_presence_files[0]
+                #      ref_depth_init = ref_depths_files[0]
+                #      ref_presence_init_sum = ref_presence_files[0]                                              
+                #    else:
+                #      ref_presence_init = np.logical_or(ref_presence_init, ref_presence_files[nloc])
+                #      ref_depth_init = np.ma.array((ref_depth_init, ref_depths_files[nloc])).sum(axis=0)           
+                #      ref_presence_init_sum = ref_presence_init_sum + ref_presence_files[nloc]                        
+                #  ref_depth_init = ref_depth_init / ref_presence_init_sum                                                                                   
 
                 if present_in_file !=0:                                                      
-                  
                   global_depth[jj][ii] = np.sum(ref_depth_init)/(nRef)**2                         
-                
                 else:                                                                         
-                  
                   global_depth[jj][ii] = nan                                                  
 
                 global_percentage[jj][ii] = ref_presence_init.sum()/(nRef)**2                                        

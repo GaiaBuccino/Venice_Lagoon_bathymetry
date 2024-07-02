@@ -1,5 +1,11 @@
 # Venice Lagoon Bathymetry
-Algorithm that updates the structured bathymetry of the North Adriatic Sea (resolution at 1/128 degree) adding the bathymetry of the Venice lagoon constructed by averaging values coming from more recent unstructured bathymetries (CORILA2003 and coarsed2013)
+Algorithm that updates the bathymetry of the structured mesh of the North Adriatic Sea (resolution at 1/128 degree) adding the bathymetry of the Venice lagoon constructed by averaging values coming from more recent unstructured bathymetry :
+
+- **CORILA2003** : dataset collected using on a “Multibeam” bathymetric acquisition system, from the end of 1999 to spring 2003, covering the whole lagoon including the most shallow areas, and not only the navigable channels. This bathymetry dataset reports depths relatives to the *zero IGM 1942*.
+
+- **coarsed2013** : high-resolution ASCII:ESRI gridded bathymetric data (0.5 m DTM) [Madricardo et al, 2016](http://dx.doi.org/10.1594/IEDA/323605), [Madricardo et al, 2017](https://doi.org/10.1038/sdata.2017.121) collected in the navigable channels of the Venice lagoon during a survey made in 2013 and reports depths relatives to the *Punta Salute level*. This dataset was coarsed by a factor 20 resulting in a coarse grid of resolution 10m x 10 m in order to reduce the processing time required by the interpolation procedures.  
+
+In order to produce a final bathymetry relative to the zero IGM 1942, the Corila2003 dataset is here used without depth correction while the depths of the coarsed2013 bathymetry are lowered by $24.3cm$ given that in 2013, the *Punta Saute level* was about $24.3cm$ lower than the *zero IGM 1942*.
 
 ## Required files
  - Bathymetry of the North Adriatic Sea (netCDF format) on which the Venice lagoon bathymetry is innested, in the following referred as _original bathymetry_ (in this example _bathy_ADRI_CADEAU_NS.nc_)
@@ -34,13 +40,20 @@ The first step fulfilled is the conversion of the reference system of coordinate
 (_See the final remarks for more details about data_)
 
 ### AVERAGING
-The first step of the algorithm used for the averaging consists of the construction of a more refined grid in which each cell of the _original bathymetry_ is sub-divided into _nRef <sup>2</sup>_ sub-cells, where _nRef_ corresponds to the number of refinements desired and its a customizable parameter.
+The first step of the algorithm used for the averaging consists of the construction of a more refined grid in which each cell of the _original bathymetry_ (matrices defined on these macro-cells are identified in the source code as `bins` or `global`) is sub-divided into _nRef <sup>2</sup>_ sub-cells  (matrices defined on this refined grid are identified in the source code as `ref_`), where _nRef_ corresponds to the number of refinements desired and is a customizable parameter.
 
 > nRef = 7 
 > 
 > This value depends on the density of samplings contained in the unstructured files, it is the largest value to certainly capture external data in each sub-cells (in area where data are present).
 
-Each sub-cell represents a bin of two different histograms that are constructed for each cell. The first histogram records per each sub-cell the number of observations that fall in its area, while the second compute the sum of the latters. At this point, the average value is computed dividing the value of the sum by the number of observation per each sub-cell. Once this computation is performed, the value of a further average (sum of the values in each sub-cell / nRef <sup>2</sup>) operation between all the sub-cells is computed and the resulting value is assigned to the original cell. The output of this operation is a matrix with the same dimension as the original grid containing in each cell the averaged value of depth coming from the two combined average procedures.
+In each cell, two different histograms of dimensions $nRef \times nRef$ are constructed :
+- the first histogram (`ref_occ`) records per each sub-cell (among the $nRef \times nRef$ sub-cells) the number of observations that fall within this sub-cell area, i.e. the number of occurences
+- the second histogram (`ref_sum`) computes the sum of the depths of the observations that fall within this sub-cell area. 
+
+At this point, a refined average depth is computed within each sub-cell dividing the value of the sum of the depths by the number of observation per each sub-cell. Sub-cells containing no-observations are considered land and set to $depth=0$. This could be done because $nRef$ was accurately chosen to insure the maximal possible refinement while keeping sub-cells dimensions larger than the resolution of the bathymetry observational datasets so that all sub-cells in water regions contain at least one observational data.
+
+Once this computation is performed, for both datasets, the final sub-cells depth matrix is set equal to the depth in the sub-cells obtained with the first dataset (2003), then eventually erased by the depths of the sub-cells obtained with the second dataset (2016) where those sub-cells have depth values > 0. 
+Finally, the average depth is computed within each macro-cell of the _original grid_ as a further average operation between all the sub-cells of this macro-cell (sum of the average depth in each sub-cell / $nRef ^2$) and the resulting value is assigned to the original macro-cell. The output of this operation is a matrix with the same dimension as the original grid containing in each cell the averaged value of the depths coming from the two combined average procedures.
 
 ### WEIGHING 
 The weighing operation is performed to take into account the distribution of data in the decision of the caracterization of each cell (water or land), the depth values computed in the averaging step is weighed with respect to the percentage of occurrence of water into each cell. In order to do so, in each cell and for each _external file_ a matrix of boolean representing the occurreces of data considering every sub-cell is constructed (_True_ values means that at least one values falls into the cell, _False_ is assigned in the opposite case) and the union of these matrices with respect to the different _external file_ is computed. The resulting matrix is used to compute the percentage of water covering each cell. If the value computed is under a certain threshold, the cell is converted into land (depth equal to zero). In this way, all the cells that have only a small area covered by water are neglected into the reconstruction of the bathymetry (this allows to avoid enlargement of the surface covered by water through very shallow areas)
