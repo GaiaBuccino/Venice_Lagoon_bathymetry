@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 import os
 from typing import List
+from scipy.interpolate import griddata
 from scipy.interpolate import Rbf
 
 
@@ -84,7 +85,6 @@ def change_reference(pd_bathy: pd.DataFrame, fileDest: str , fileName:str, initi
             
         elif fileName == 'Bathy_2013_coarsed':
 
-            #depth_IGM = gpd_bathy_nr[2] + 0.0243        # Conversion of data taken wrt Punta Salute into data wrt IGM 1942
             depth_IGM = gpd_bathy_nr[2] - 0.243        # Conversion of data taken wrt Punta Salute into data wrt IGM 1942
 
         gpd_df = {"lon": lon_nr, "lat": lat_nr, "depth": depth_IGM}
@@ -351,43 +351,54 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
                 lat_coord.append(jj)
 
                 # RM: ref_ = refined grid
-                ref_lon= np.linspace(lonbins[ii],lonbins[ii+1],pt)
-                ref_lat = np.linspace(latbins[jj],latbins[jj+1],pt)
-                ref_lonlat_meshgrid=np.array(np.meshgrid(ref_lon, ref_lat))
-                ref_lon_grid_flat=ref_lonlat_meshgrid[0].flatten()
-                ref_lat_grid_flat=ref_lonlat_meshgrid[1].flatten()
-                ref_Z_grid_flat=np.zeros((np.shape(ref_lon_grid_flat)))
+                
                 ref_depths_files = []                                   # List of matrices containing depths corresponding to the cells in the refined grid
                 ref_presence_files = []                                 # List of matrices with 1 if there exists values in the refined cell, 0 else
-                ref_occ_files = []                                 # List of matrices with 1 if there exists values in the refined cell, 0 else
-                where=np.array(list(zip(ref_lonlat_meshgrid[0].flatten(),ref_lonlat_meshgrid[1].flatten() )))
+                ref_occ_files = []      
+                                          # List of matrices with 1 if there exists values in the refined cell, 0 else
+                
+                
 
                 for nfile in np.arange(len(files)):                     # Loop over unstructured data files 
                     
                     # Local refined (ref) matrices (nRef x nRef)
                     
-                    ref_sum = np.zeros((nRef, nRef))                    # Matrix with the sum of the values that are in each refined cell         
-                    ref_depth = np.zeros((nRef, nRef))                  # Matrix with the average of the values that are in each refined cell 
-                    ref_occ = np.zeros((nRef, nRef))                    # Matrix with the count of values in each refined cell
-                    ref_presence = np.zeros((nRef, nRef))               # Matrix with 1 if there exists at least one value in the refined cell, 0 else
+                    ref_sum = np.zeros((pt, pt))                    # Matrix with the sum of the values that are in each refined cell         
+                    ref_depth = np.zeros((pt, pt))                  # Matrix with the average of the values that are in each refined cell 
+                    ref_occ = np.zeros((pt, pt))                    # Matrix with the count of values in each refined cell
+                    ref_presence = np.zeros((pt, pt))               # Matrix with 1 if there exists at least one value in the refined cell, 0 else
 
                     lats_un = latitudes_un[nfile]
                     lons_un = longitudes_un[nfile]
                     deps_un = depths_un[nfile]
+                    data_points=np.array(list(zip(lons_un,lats_un)))
                     Z_un=np.zeros((len(lats_un)))
                     
                     # Contruction of two histograms: occurrence and summation with unstructured values into structured bins
-                    if(nfile==0):
-                        rbfi=Rbf(lons_un,lats_un,Z_un,deps_un,smooth=0,function='linear')
-                        flatten_values=rbfi(ref_lon_grid_flat,ref_lat_grid_flat,ref_Z_grid_flat)
-                        ref_depth=flatten_values.reshape(pt,pt)
-                    else:
-                        ref_sum, lonedgesw, latedgesw = np.histogram2d(lons_un, lats_un, bins = [ref_lon,ref_lat], weights=deps_un)
-                        ref_sum = ref_sum.T
-                        # Computation of the mean                
-                        ref_depth[ref_occ != 0] = ref_sum[ref_occ != 0]/ref_occ[ref_occ != 0]
+                    ref_lon= np.linspace(lonbins[ii],lonbins[ii+1],pt)
+                    ref_lat = np.linspace(latbins[jj],latbins[jj+1],pt)
+                    ref_sum, lonedgesw, latedgesw = np.histogram2d(lons_un, lats_un, bins = [ref_lon,ref_lat], weights=deps_un)
                     ref_occ, lonedges, latedges = np.histogram2d(lons_un, lats_un, bins = [ref_lon,ref_lat])
                     ref_occ = ref_occ.T
+                    ref_sum = ref_sum.T
+                    # Computation of the mean                
+                    ref_depth[ref_occ != 0] = ref_sum[ref_occ != 0]/ref_occ[ref_occ != 0]
+
+                    if(nfile==0):
+                        ref_lon= np.linspace(lonbins[ii],lonbins[ii+1],nRef)
+                        ref_lat = np.linspace(latbins[jj],latbins[jj+1],nRef)
+                        
+                        ref_lonlat_meshgrid=np.array(np.meshgrid(ref_lon, ref_lat))
+                        where=np.array(list(zip(ref_lonlat_meshgrid[0].flatten(),ref_lonlat_meshgrid[1].flatten() )))
+                        ref_lon_grid_flat=ref_lonlat_meshgrid[0].flatten()
+                        ref_lat_grid_flat=ref_lonlat_meshgrid[1].flatten()
+                        ref_Z_grid_flat=np.zeros((np.shape(ref_lon_grid_flat)))
+                        #rbfi=Rbf(lons_un,lats_un,Z_un,deps_un,smooth=0,function='linear')
+                        #flatten_values=rbfi(ref_lon_grid_flat,ref_lat_grid_flat,ref_Z_grid_flat)
+                        flatten_values = griddata(data_points,deps_un, where, method='linear') #cubic', 'linear','nearest'
+                        ref_interp_dep =flatten_values.reshape(pt,pt)
+                    
+                    
 
                     ref_depths_files.append(ref_depth)
                     ref_occ_files.append(ref_occ)
@@ -421,16 +432,16 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
                 #      ref_presence_init_sum = ref_presence_files[0]                                              
                 #    else:
                 #      ref_presence_init = np.logical_or(ref_presence_init, ref_presence_files[nloc])
-                #      ref_depth_init = np.ma.array((ref_depth_init, ref_depths_files[nloc])).sum(axis=0)           
+                #      ref_depth_init = np.ma.array((ref_depth_init, ref_depths_files[nloc])).sum(axis=0)       SOSTITUIRE CON SOMMA PESATA RISPETTO ALL'AREA DI SOTTO-CELLA COPERTA DA DATI 2013 -> 100 M2 (AREA TRA 4 PUNTI) X OCCURRENCES / AREA SOTTOCELLA   
                 #      ref_presence_init_sum = ref_presence_init_sum + ref_presence_files[nloc]                        
                 #  ref_depth_init = ref_depth_init / ref_presence_init_sum                                                                                   
 
                 if present_in_file !=0:                                                      
-                  global_depth[jj][ii] = np.sum(ref_depth_init)/(nRef)**2                         
+                  global_depth[jj][ii] = np.sum(ref_depth_init)/(pt)**2                         
                 else:                                                                         
                   global_depth[jj][ii] = nan                                                  
 
-                global_percentage[jj][ii] = ref_presence_init.sum()/(nRef)**2                                        
+                global_percentage[jj][ii] = ref_presence_init.sum()/(pt)**2                                        
                 print('global percentage equal to ', global_percentage[jj][ii])    
                 print('global depth equal to ', global_depth[jj][ii])              
 
@@ -482,7 +493,7 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
 
 
 fileLoc = './'              # From where files are taken
-fileDest = fileLoc + 'output/'                       # Where files are saved
+fileDest = fileLoc + 'output/'                       # Where files are saved        /g100/home/userexternal/gbuccino/Venice_Lagoon_bathymetry/output
 
 if not (os.path.exists(fileDest)):
     os.mkdir(fileDest)
@@ -512,7 +523,7 @@ lat_lagoon = lat.sel(latitude= slice(45.12109375,45.589843750)).values
 
 original_files = ['Bathy_2003CORILA', 'Bathy_2013_coarsed'] 	# Files with unstructured data to be averaged on the grid
 
-nPt = [8]                   # The largest value for which each refined cell certainly contains points is 7 (RM: nRefinement = nInternalPoints - 1)
+nPt = [40, 50]                   # The largest value for which each refined cell certainly contains points is 7 (RM: nRefinement = nInternalPoints - 1)
 
 nr_files = []
 
