@@ -20,25 +20,38 @@ Data related to the lagoon come from to data files containing unstructured grids
 For a more detailed description of the algorithm used see: https://github.com/GaiaBuccino/Venice_Lagoon_bathymetry/blob/main/README.md
 """ 
 
-def transform_coordinates_system(Xin,Yin,EPSG_0="EPSG:4326",EPSG_F="EPSG:6875"):
-   import pandas as pd
-   import geopandas
-   from shapely.geometry import Point, Polygon
-   (Xflat,Yflat)=(Xin.flatten(),Yin.flatten())
-   input_flatgrid=np.vstack((Xflat,Yflat)).transpose()
-   if(EPSG_0=="EPSG:4326"):
-     df = pd.DataFrame(input_flatgrid, columns = ['Lon','Lat'])
-   else:
-     df = pd.DataFrame(input_flatgrid, columns = ['Xorig','Yorig'])
-   df['geometry'] = df.apply(lambda row: Point(row[df.columns[0]], row[df.columns[1]]), axis=1)
-   geop_df  = geopandas.GeoDataFrame(df)
-   geop_df.crs=EPSG_0 # input coordinates
-   geop_df=geop_df.to_crs(EPSG_F)  # output coordinates\
-   X=geop_df.geometry.x.to_numpy(dtype=float).reshape(np.shape(Xin))
-   Y=geop_df.geometry.y.to_numpy(dtype=float).reshape(np.shape(Yin))
-   print('old XY (',EPSG_0,') had min,average,max: X(',np.min(Xin),np.average(Xin),np.max(Xin),') Y(',np.min(Yin),np.average(Yin),np.max(Yin),') and shape',np.shape(Xin),np.shape(Yin))
-   print('new XY (',EPSG_F,') had min,average,max: X(',np.min(X),np.average(X),np.max(X),') Y(',np.min(Y),np.average(Y),np.max(Y),') and shape',np.shape(X),np.shape(Y))
-   return X,Y #,geop_df
+def transform_coordinates_system(Xin:np.ndarray, Yin:np.ndarray, EPSG_0:str ="EPSG:4326", EPSG_F:str="EPSG:3004"):
+    """Function that given a meshgrid object converts its coordinates from a reference system to another
+
+    Args:
+        Xin (np.ndarray): x-coordinates coming from a meshgrid structure expressed wrt the initial reference system
+        Yin (np.ndarray): y-coordinates coming from a meshgrid structure expressed wrt the initial reference system
+        EPSG_0 (str, optional): starting reference system. Defaults to "EPSG:4326".
+        EPSG_F (str, optional): final reference system. Defaults to "EPSG:3004".
+
+    Returns:
+        X (np.ndarray): x-coordinates expressed wrt the initial reference system
+        Y (np.ndarray): y-coordinates expressed wrt the initial reference system
+    """
+
+    import pandas as pd
+    import geopandas
+    from shapely.geometry import Point, Polygon
+    (Xflat,Yflat)=(Xin.flatten(),Yin.flatten())
+    input_flatgrid=np.vstack((Xflat,Yflat)).transpose()
+    if(EPSG_0=="EPSG:4326"):
+        df = pd.DataFrame(input_flatgrid, columns = ['Lon','Lat'])
+    else:
+        df = pd.DataFrame(input_flatgrid, columns = ['Xorig','Yorig'])
+    df['geometry'] = df.apply(lambda row: Point(row[df.columns[0]], row[df.columns[1]]), axis=1)
+    geop_df  = geopandas.GeoDataFrame(df)
+    geop_df.crs=EPSG_0 # input coordinates
+    geop_df=geop_df.to_crs(EPSG_F)  # output coordinates\
+    X=geop_df.geometry.x.to_numpy(dtype=float).reshape(np.shape(Xin))
+    Y=geop_df.geometry.y.to_numpy(dtype=float).reshape(np.shape(Yin))
+    print('old XY (',EPSG_0,') had min,average,max: X(',np.min(Xin),np.average(Xin),np.max(Xin),') Y(',np.min(Yin),np.average(Yin),np.max(Yin),') and shape',np.shape(Xin),np.shape(Yin))
+    print('new XY (',EPSG_F,') had min,average,max: X(',np.min(X),np.average(X),np.max(X),') Y(',np.min(Y),np.average(Y),np.max(Y),') and shape',np.shape(X),np.shape(Y))
+    return X,Y 
 
 def geom_creation(coord1: np.ndarray, coord2:np.ndarray, structured:bool = False): 
 
@@ -328,6 +341,8 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
         lonb = lon_st - 0.5*dlon
         latb = lat_st - 0.5*dlat
 
+        # Computing sub-cell area (m^2)
+
         grid = np.meshgrid(lonb, latb, indexing='ij')
         x,y = transform_coordinates_system(grid[0],grid[1],EPSG_0="EPSG:4326",EPSG_F="EPSG:3004")
         dx = np.average((x[-1]- x[0]) / (len(x)-1))
@@ -380,7 +395,7 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
                 ref_lat = np.linspace(latbins[jj],latbins[jj+1],pt)
                 ref_depths_files = []                                   # List of matrices containing depths corresponding to the cells in the refined grid
                 ref_presence_files = []                                 # List of matrices with 1 if there exists values in the refined cell, 0 else
-                ref_occ_files = []                                 # List of matrices with 1 if there exists values in the refined cell, 0 else
+                ref_occ_files = []                                      # List of matrices with 1 if there exists values in the refined cell, 0 else
                    
 
                 for nfile in np.arange(len(files)):                     # Loop over unstructured data files 
@@ -420,37 +435,20 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
                 
                 present_in_file = 0
 
-                # for nloc in np.arange(0,len(files)):
-                #   if ref_presence_files[nloc].sum() > 0:
-                #     present_in_file = present_in_file + 1
-                #   if(nloc == 0):
-                #     ref_presence_init = ref_presence_files[nloc]
-                #     ref_depth_init = ref_depths_files[nloc]
-                #   else:
-                    
-                #     
-                #     ref_presence_init[ref_occ_files[nloc]>0]=ref_occ_files[nloc][ref_occ_files[nloc]>0]  # CL
-                #     ref_depth_init[ref_occ_files[nloc]>0]=ref_depths_files[nloc][ref_occ_files[nloc]>0]  # CL
-                # ref_presence_init=ref_presence_init>0
-
                 for nloc in np.arange(0,len(files)):
                     if ref_presence_files[nloc].sum() > 0:
                         present_in_file = present_in_file + 1
                     if(nloc == 0):
                         ref_presence_init = ref_presence_files[0]
                         ref_depth_init = ref_depths_files[0]
-                        #ref_presence_init_sum = ref_presence_files[nloc]
                         shallow_depth = ref_depths_files[0]
 
                     else:
                         channel_weight = (ref_occ_files[nloc] * 100 / subcell_area)    # 100 m^2 is the area "covered" by every channel observation 
                         shallow_weight = 1 - channel_weight
                         ref_presence_init = np.logical_or(ref_presence_init, ref_presence_files[nloc])
-                        #ref_depth_init = np.ma.array((ref_depth_init, ref_depths_files[nloc])).sum(axis=0)    
                         ref_depth_init = ref_depths_files[nloc]*channel_weight + shallow_depth*shallow_weight      
-                        #ref_presence_init_sum = ref_presence_init_sum + ref_presence_files[nloc] 
 
-                #ref_depth_init = ref_depth_init #/ ref_presence_init_sum                                                                                   
 
                 if present_in_file !=0:                                                      
                     global_depth[jj][ii] = np.sum(ref_depth_init)/(nRef)**2                         
@@ -508,7 +506,7 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
 #####################
 
 
-fileLoc = '/g100/home/userexternal/gbuccino/Venice_Lagoon_bathymetry/'              # From where files are taken
+fileLoc = '/g100/home/userexternal/gbuccino/Venice_Lagoon_bathymetry/'                                   # From where files are taken
 fileDest = '/g100_scratch/userexternal/gbuccino/lagoon_analysis/Data_preparation/'                       # Where files are saved
 
 if not (os.path.exists(fileDest)):
@@ -539,7 +537,7 @@ lat_lagoon = lat.sel(latitude= slice(45.12109375,45.589843750)).values
 
 original_files = ['Bathy_2003CORILA', 'Bathy_2013_coarsed'] 	# Files with unstructured data to be averaged on the grid
 
-nPt = [8]                   # The largest value for which each refined cell certainly contains points is 7 (RM: nRefinement = nInternalPoints - 1)
+nPt = [8]                                                       # The largest value for which each refined cell certainly contains points is 7 (RM: nRefinement = nInternalPoints - 1)
 
 nr_files = []
 
