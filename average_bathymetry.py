@@ -20,6 +20,25 @@ Data related to the lagoon come from to data files containing unstructured grids
 For a more detailed description of the algorithm used see: https://github.com/GaiaBuccino/Venice_Lagoon_bathymetry/blob/main/README.md
 """ 
 
+def transform_coordinates_system(Xin,Yin,EPSG_0="EPSG:4326",EPSG_F="EPSG:6875"):
+   import pandas as pd
+   import geopandas
+   from shapely.geometry import Point, Polygon
+   (Xflat,Yflat)=(Xin.flatten(),Yin.flatten())
+   input_flatgrid=np.vstack((Xflat,Yflat)).transpose()
+   if(EPSG_0=="EPSG:4326"):
+     df = pd.DataFrame(input_flatgrid, columns = ['Lon','Lat'])
+   else:
+     df = pd.DataFrame(input_flatgrid, columns = ['Xorig','Yorig'])
+   df['geometry'] = df.apply(lambda row: Point(row[df.columns[0]], row[df.columns[1]]), axis=1)
+   geop_df  = geopandas.GeoDataFrame(df)
+   geop_df.crs=EPSG_0 # input coordinates
+   geop_df=geop_df.to_crs(EPSG_F)  # output coordinates\
+   X=geop_df.geometry.x.to_numpy(dtype=float).reshape(np.shape(Xin))
+   Y=geop_df.geometry.y.to_numpy(dtype=float).reshape(np.shape(Yin))
+   print('old XY (',EPSG_0,') had min,average,max: X(',np.min(Xin),np.average(Xin),np.max(Xin),') Y(',np.min(Yin),np.average(Yin),np.max(Yin),') and shape',np.shape(Xin),np.shape(Yin))
+   print('new XY (',EPSG_F,') had min,average,max: X(',np.min(X),np.average(X),np.max(X),') Y(',np.min(Y),np.average(Y),np.max(Y),') and shape',np.shape(X),np.shape(Y))
+   return X,Y #,geop_df
 
 def geom_creation(coord1: np.ndarray, coord2:np.ndarray, structured:bool = False): 
 
@@ -309,6 +328,13 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
         lonb = lon_st - 0.5*dlon
         latb = lat_st - 0.5*dlat
 
+        grid = np.meshgrid(lonb, latb, indexing='ij')
+        x,y = transform_coordinates_system(grid[0],grid[1],EPSG_0="EPSG:4326",EPSG_F="EPSG:3004")
+        dx = np.average((x[-1]- x[0]) / (len(x)-1))
+        dy = np.average((y[:,-1]- y[:,0]) / (len(y[0])-1))
+
+        subcell_area = dx*dy / nRef**2
+
         # Definition of an enlarged grid
 
         lonbins = np.zeros((len(lonb)+1))
@@ -365,6 +391,8 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
                     ref_depth = np.zeros((nRef, nRef))                  # Matrix with the average of the values that are in each refined cell 
                     ref_occ = np.zeros((nRef, nRef))                    # Matrix with the count of values in each refined cell
                     ref_presence = np.zeros((nRef, nRef))               # Matrix with 1 if there exists at least one value in the refined cell, 0 else
+                    channel_weight = np.zeros((nRef, nRef))
+                    shallow_weight = np.zeros((nRef, nRef))
 
                     lats_un = latitudes_un[nfile]
                     lons_un = longitudes_un[nfile]
@@ -392,34 +420,42 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
                 
                 present_in_file = 0
 
-                for nloc in np.arange(0,len(files)):
-                  if ref_presence_files[nloc].sum() > 0:
-                    present_in_file = present_in_file + 1
-                  if(nloc == 0):
-                    ref_presence_init = ref_presence_files[nloc]
-                    ref_depth_init = ref_depths_files[nloc]
-                  else:
-                    ref_presence_init[ref_occ_files[nloc]>0]=ref_presence_files[nloc][ref_presence_files[nloc]>0]  # CL
-                    ref_depth_init[ref_occ_files[nloc]>0]=ref_depths_files[nloc][ref_presence_files[nloc]>0]  # CL
-                ref_presence_init=ref_presence_init>0
+                # for nloc in np.arange(0,len(files)):
+                #   if ref_presence_files[nloc].sum() > 0:
+                #     present_in_file = present_in_file + 1
+                #   if(nloc == 0):
+                #     ref_presence_init = ref_presence_files[nloc]
+                #     ref_depth_init = ref_depths_files[nloc]
+                #   else:
+                    
+                #     
+                #     ref_presence_init[ref_occ_files[nloc]>0]=ref_occ_files[nloc][ref_occ_files[nloc]>0]  # CL
+                #     ref_depth_init[ref_occ_files[nloc]>0]=ref_depths_files[nloc][ref_occ_files[nloc]>0]  # CL
+                # ref_presence_init=ref_presence_init>0
 
-                #  for nloc in np.arange(0,len(files)):
-                #    if ref_presence_files[nloc].sum() > 0:
-                #      present_in_file = present_in_file + 1
-                #    if(nloc == 0):
-                #      ref_presence_init = ref_presence_files[0]
-                #      ref_depth_init = ref_depths_files[0]
-                #      ref_presence_init_sum = ref_presence_files[0]                                              
-                #    else:
-                #      ref_presence_init = np.logical_or(ref_presence_init, ref_presence_files[nloc])
-                #      ref_depth_init = np.ma.array((ref_depth_init, ref_depths_files[nloc])).sum(axis=0)           
-                #      ref_presence_init_sum = ref_presence_init_sum + ref_presence_files[nloc]                        
-                #  ref_depth_init = ref_depth_init / ref_presence_init_sum                                                                                   
+                for nloc in np.arange(0,len(files)):
+                    if ref_presence_files[nloc].sum() > 0:
+                        present_in_file = present_in_file + 1
+                    if(nloc == 0):
+                        ref_presence_init = ref_presence_files[0]
+                        ref_depth_init = ref_depths_files[0]
+                        #ref_presence_init_sum = ref_presence_files[nloc]
+                        shallow_depth = ref_depths_files[0]
+
+                    else:
+                        channel_weight = (ref_occ_files[nloc] * 100 / subcell_area)    # 100 m^2 is the area "covered" by every channel observation 
+                        shallow_weight = 1 - channel_weight
+                        ref_presence_init = np.logical_or(ref_presence_init, ref_presence_files[nloc])
+                        #ref_depth_init = np.ma.array((ref_depth_init, ref_depths_files[nloc])).sum(axis=0)    
+                        ref_depth_init = ref_depths_files[nloc]*channel_weight + shallow_depth*shallow_weight      
+                        #ref_presence_init_sum = ref_presence_init_sum + ref_presence_files[nloc] 
+
+                #ref_depth_init = ref_depth_init #/ ref_presence_init_sum                                                                                   
 
                 if present_in_file !=0:                                                      
-                  global_depth[jj][ii] = np.sum(ref_depth_init)/(nRef)**2                         
+                    global_depth[jj][ii] = np.sum(ref_depth_init)/(nRef)**2                         
                 else:                                                                         
-                  global_depth[jj][ii] = nan                                                  
+                    global_depth[jj][ii] = nan                                                  
 
                 global_percentage[jj][ii] = ref_presence_init.sum()/(nRef)**2                                        
                 print('global percentage equal to ', global_percentage[jj][ii])    
@@ -472,8 +508,8 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
 #####################
 
 
-fileLoc = './'              # From where files are taken
-fileDest = fileLoc + 'output/'                       # Where files are saved
+fileLoc = '/g100/home/userexternal/gbuccino/Venice_Lagoon_bathymetry/'              # From where files are taken
+fileDest = '/g100_scratch/userexternal/gbuccino/lagoon_analysis/Data_preparation/'                       # Where files are saved
 
 if not (os.path.exists(fileDest)):
     os.mkdir(fileDest)
