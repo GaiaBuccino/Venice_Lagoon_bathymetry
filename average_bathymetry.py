@@ -492,8 +492,8 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
 #####################
 
 
-fileLoc = './'              # From where files are taken
-fileDest = fileLoc + 'output/'                       # Where files are saved        /g100/home/userexternal/gbuccino/Venice_Lagoon_bathymetry/output
+fileLoc = '/g100/home/userexternal/gbuccino/Venice_Lagoon_bathymetry'              # From where files are taken
+fileDest = '/g100_scratch/userexternal/gbuccino/lagoon_analysis/Data_preparation/'                     # Where files are saved        /g100/home/userexternal/gbuccino/Venice_Lagoon_bathymetry/output
 
 if not (os.path.exists(fileDest)):
     os.mkdir(fileDest)
@@ -523,7 +523,7 @@ lat_lagoon = lat.sel(latitude= slice(45.12109375,45.589843750)).values
 
 original_files = ['Bathy_2003CORILA', 'Bathy_2013_coarsed'] 	# Files with unstructured data to be averaged on the grid
 
-nPt = [40, 50]                   # The largest value for which each refined cell certainly contains points is 7 (RM: nRefinement = nInternalPoints - 1)
+nPt = [8]                   # The largest value for which each refined cell certainly contains points is 7 (RM: nRefinement = nInternalPoints - 1)
 
 nr_files = []
 
