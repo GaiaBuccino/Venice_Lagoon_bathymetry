@@ -1,15 +1,21 @@
 # Venice Lagoon Bathymetry
-Algorithm that updates the bathymetry of the structured mesh of the North Adriatic Sea (resolution at 1/128 degree) adding the bathymetry of the Venice lagoon constructed by averaging values coming from more recent unstructured bathymetry :
+Algorithm that updates the bathymetry of the structured mesh of the North Adriatic Sea adding the bathymetry of the Venice lagoon constructed by averaging values coming from more recent unstructured data :
 
-- **CORILA2003** : dataset collected using on a “Multibeam” bathymetric acquisition system, from the end of 1999 to spring 2003, covering the whole lagoon including the most shallow areas, and not only the navigable channels. This bathymetry dataset reports depths relatives to the *zero IGM 1942*.
+- **CORILA2003** : dataset collected using on a “Multibeam” bathymetric acquisition system, from the end of 1999 to spring 2003, covering the whole lagoon including the most shallow areas, and not only the navigable channels. This bathymetry dataset reports depths with respect to the *zero IGM 1942*. In this file, coordinates are expressed in meters
 
-- **coarsed2013** : high-resolution ASCII:ESRI gridded bathymetric data (0.5 m DTM) [Madricardo et al, 2016](http://dx.doi.org/10.1594/IEDA/323605), [Madricardo et al, 2017](https://doi.org/10.1038/sdata.2017.121) collected in the navigable channels of the Venice lagoon during a survey made in 2013 and reports depths relatives to the *Punta Salute level*. This dataset was coarsed by a factor 20 resulting in a coarse grid of resolution 10m x 10 m in order to reduce the processing time required by the interpolation procedures.  
+
+- **coarsed2013** : high-resolution ASCII:ESRI gridded bathymetric data (0.5 m DTM) [Madricardo et al, 2016](http://dx.doi.org/10.1594/IEDA/323605), [Madricardo et al, 2017](https://doi.org/10.1038/sdata.2017.121) collected in the navigable channels of the Venice lagoon during a survey made in 2013 and reports depths relatives to the *Punta Salute level*. This dataset was coarsed by a factor 20 resulting in a coarse grid of resolution 10m x 10 m in order to reduce the processing time required by the interpolation procedures. In this file, coordinates are expressed in meters.
+
+_see Bathymetry_scaling.pdf for details and visual explanation_
+  
+- **ADRI_CADEAU_NS** : this file introduces the gridded domain (resolution of 1/128 of degree) with coordinates expressed using longitude and latitude. Correspondent depth data have been neglected due to the coarser resolution with respect to the other files and to the fact that they date back to **year**.
+
 
 In order to produce a final bathymetry relative to the zero IGM 1942, the Corila2003 dataset is here used without depth correction while the depths of the coarsed2013 bathymetry are lowered by $24.3cm$ given that in 2013, the *Punta Saute level* was about $24.3cm$ lower than the *zero IGM 1942*.
 
 ## Required files
- - Bathymetry of the North Adriatic Sea (netCDF format) on which the Venice lagoon bathymetry is innested, in the following referred as _original bathymetry_ (in this example _bathy_ADRI_CADEAU_NS.nc_)
- - Files (csv format) with depth data to update the original bathymetry, in the following referred as _external files_ (in this example _Bathy_2003CORILA.csv_ and _Bathy_2013_coarsed.csv_)
+ - Bathymetry of the North Adriatic Sea (netCDF format) on which the Venice lagoon bathymetry is innested, in the following referred as _original grid_ (in this example _bathy_ADRI_CADEAU_NS.nc_)
+ - Files (csv format) with depth data to update the original grid, in the following referred as _external files_ (in this example _Bathy_2003CORILA.csv_ and _Bathy_2013_coarsed.csv_)
 
 ## Required packages
 
@@ -24,14 +30,14 @@ In order to produce a final bathymetry relative to the zero IGM 1942, the Corila
 - typing
 
 ## _average_bathymetry.py_
-The procedure to construct the Venice lagoon updated bathymetry consists of 5 steps: __Pre-processing__ data, __Averaging__ data recorded in the _external files_, __Weighing__ data given their occurrence on the grid-cells, __Cleaning__ of critical points (clusters of solated points, land points, boundary points), __Adding__ the averaged-weighted bathymetry to the original bthymetry, __Exporting__ the results in different formats.
+The procedure to construct the Venice lagoon updated bathymetry consists of 5 steps: __Pre-processing__ data, __Averaging__ data recorded in the _external files_, __Weighing__ data given their occurrence on the grid-cells, __Cleaning__ of critical points (clusters of isolated points, land points, boundary points), __Adding__ the averaged-weighted bathymetry to the original bthymetry, __Exporting__ the results in different formats.
 
 To start the procedure, the user has to modify the path where the necessary files are stored _fileLoc_ and the one where the produced files have to be saved _fileDest_: (they are both defined as the current folder by default).
 
 In the following each step is described in details:
 
 ### PRE-PROCESSING 
-The first step fulfilled is the conversion of the reference system of coordinates of the _external files_ in order to be comparable with the _original bathymetry_ data. To do so, all the _external files_ are converted into GeoDataFrame to exploit the built-in function that automatically convert the coordinate reference system (to_crs()). The initial and final reference system have to be specified changing the values of the variables _init_ref_ representing the initial reference system and _fin_ref_ that is the final one
+The first step fulfilled is the conversion of the reference system of coordinates of the _external files_ in order to be comparable with the _original grid_ reference. To do so, all the _external files_ are converted into GeoDataFrame to exploit the built-in function that automatically convert the coordinate reference system (to_crs()). The initial and final reference system have to be specified changing the values of the variables _init_ref_ representing the initial reference system and _fin_ref_ that is the final one
 
 >init_ref = "3004"
 >
@@ -40,7 +46,7 @@ The first step fulfilled is the conversion of the reference system of coordinate
 (_See the final remarks for more details about data_)
 
 ### AVERAGING
-The first step of the algorithm used for the averaging consists of the construction of a more refined grid in which each cell of the _original bathymetry_ (matrices defined on these macro-cells are identified in the source code as `bins` or `global`) is sub-divided into _nRef <sup>2</sup>_ sub-cells  (matrices defined on this refined grid are identified in the source code as `ref_`), where _nRef_ corresponds to the number of refinements desired and is a customizable parameter.
+The first step of the algorithm used for the averaging consists of the construction of a more refined grid in which each cell of the _original grid_ (matrices defined on these macro-cells are identified in the source code as `bins` or `global`) is sub-divided into _nRef <sup>2</sup>_ sub-cells  (matrices defined on this refined grid are identified in the source code as `ref_`), where _nRef_ corresponds to the number of refinements desired and is a customizable parameter.
 
 > nRef = 7 
 > 
@@ -70,7 +76,7 @@ Each cell is categorized into a categorical variable as follows:
 | **3**     | R       | Depth value given     |
 | **4**     | P       | Depth value received   |
 | **5**     | P       | Depth value manually changed      |
-| **6**     | R       | Superposition with _original bathymetry_   |
+| **6**     | R       | Superposition with _original grid_ data of the North Adriatic Sea  |
 | **7**     | R       | Depth value less than threshold      |
 | **8**     | R       | Closure of the domain     |
 
@@ -83,20 +89,12 @@ The same modifications has to be done on the __bathy__ variable
 <ins>Remark:</ins> values 3 and 4 have been introduced to guarantee the conservation of the volume of water. This is done adding the value of the depth of some particular cells to the one adiacent, based on the necessity to avoid the connection of cells or to represent land cells without neglecting important water channels
 
 ### ADDING
-Once the final bathymetry is ready, it is added to the _original bathymetry_ of the North Adriatic Sea given at the beginning through the simple superposition of the values present in the two different files, the _original bathymetry_ and the _lagoon bathymetry_
+Once the final bathymetry is ready, it is added to the _original grid_ of the North Adriatic Sea given at the beginning through the simple superposition of the values present in the two different files, the _original grid_ and the _lagoon bathymetry_
 
 ### EXPORTING
 The produced files are exported in the .nc and .bin format
 
-### Final Remarks
-<ins>About Data</ins>
-
-- _original structured bathymetry:_ data are collected with respect to the Geographic Military Institute zero, called Genova 1942 (IGM 1942)
-- _Bathy_CORILA2003.csv:_ contains data collected with respect to the Geographic Military Institute zero in the third column (index 2 in python) and with respect to the zero of Punta Salute in the last column
-- _Bathy_2013_coarsed.csv:_ data are referred to the zero of Punta Salute, so they need to be rescaled to be referred to the zero of IGM 1942. This is done by adding 0.243 to each value of depth 
-
-_see Bathymetry_scaling.pdf for details and visual explanation_
 
 ### Visualization
-Open _Venice_avg_cleaned_bathymetry.qgz_ to visualize the results produced for the case under analysis
+Open Test_case/Venice_avg_cleaned_bathymetry.qgz_ to visualize the results produced for the analysis performed.
 
