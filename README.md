@@ -8,7 +8,7 @@ Algorithm that updates the bathymetry of the structured mesh of the North Adriat
 
 _see Bathymetry_scaling.pdf for details and visual explanation_
   
-- **ADRI_CADEAU_NS** : this file introduces the gridded domain (resolution of 1/128 of degree) with coordinates expressed using longitude and latitude. Correspondent depth data have been neglected due to the coarser resolution with respect to the other files and to the fact that they date back to **year**.
+- **ADRI_CADEAU_NS** : this file introduces the gridded domain (resolution of 1/128 of degree) with coordinates expressed using longitude and latitude. Correspondent depth data have been neglected due to the coarser resolution with respect to the other files.
 
 
 In order to produce a final bathymetry relative to the zero IGM 1942, the Corila2003 dataset is here used without depth correction while the depths of the coarsed2013 bathymetry are lowered by $24.3cm$ given that in 2013, the *Punta Saute level* was about $24.3cm$ lower than the *zero IGM 1942*.
