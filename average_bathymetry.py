@@ -506,8 +506,8 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
 #####################
 
 
-fileLoc = '/g100/home/userexternal/gbuccino/Venice_Lagoon_bathymetry/'                                   # From where files are taken
-fileDest = '/g100_scratch/userexternal/gbuccino/lagoon_analysis/Data_preparation/'                       # Where files are saved
+fileLoc = './'                                   # From where files are taken
+fileDest = fileLoc + '/output/'                       # Where files are saved
 
 if not (os.path.exists(fileDest)):
     os.mkdir(fileDest)
