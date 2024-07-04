@@ -144,12 +144,13 @@ def cleaning(bathy: xr.DataArray, percentage: int, coverage_percentage: np.ndarr
                                                 Possible values and meanings:   0 PRESENT CELL: not touched
                                                                                 1 REMOVED CELL: not significant
                                                                                 2 REMOVED CELL: water coverage <20%
-                                                                                3 REMOVED CELL:depth value given
-                                                                                4 REMOVED CELL:depth value received
-                                                                                5 REMOVED CELL:depth value manually changed
-                                                                                6 REMOVED CELL:superposition with NA NAS_bathymetry
-                                                                                7 REMOVED CELL:depth less than hFac
-                                                                                8 REMOVED CELL:closure of the domain  
+                                                                                3 REMOVED CELL: depth value given
+                                                                                4 PRESENT CELL: depth value received
+                                                                                5 PRESENT CELL: depth value manually changed
+                                                                                6 REMOVED CELL: superposition with NA NAS_bathymetry
+                                                                                7 REMOVED CELL: depth less than hFac
+                                                                                8 REMOVED CELL: closure of the domain  
+                                                                                9 PRESENT CELL: averaged depths between adiacent cells
     """
 
     hFac = -0.2
@@ -205,6 +206,11 @@ def cleaning(bathy: xr.DataArray, percentage: int, coverage_percentage: np.ndarr
         operation.loc[operation.latitude[43],operation.longitude[23]:operation.longitude[25]] = 1
         operation.loc[operation.latitude[44],operation.longitude[25]:operation.longitude[26]] = 1
         operation.loc[operation.latitude[45],operation.longitude[26]] = 1
+        operation.loc[operation.latitude[44]:operation.latitude[45],operation.longitude[27]:operation.longitude[28]] = 9
+        operation.loc[operation.latitude[43],operation.longitude[26]:operation.longitude[27]] = 9
+        operation.loc[operation.latitude[42],operation.longitude[25]:operation.longitude[26]] = 9
+        operation.loc[operation.latitude[41],operation.longitude[24]:operation.longitude[25]] = 9
+        operation.loc[operation.latitude[39]:operation.latitude[40],operation.longitude[24]:operation.longitude[25]] = 9
 
         # Small channels
 
@@ -277,6 +283,12 @@ def cleaning(bathy: xr.DataArray, percentage: int, coverage_percentage: np.ndarr
     bathy.loc[bathy.latitude[43],bathy.longitude[23]:bathy.longitude[25]] = val
     bathy.loc[bathy.latitude[44],bathy.longitude[25]:bathy.longitude[26]] = val
     bathy.loc[bathy.latitude[45],bathy.longitude[26]] = val
+
+    bathy.loc[bathy.latitude[44]:bathy.latitude[45],bathy.longitude[27]:bathy.longitude[28]] = bathy.loc[bathy.latitude[44]:bathy.latitude[45],bathy.longitude[27]:bathy.longitude[28]].mean()
+    bathy.loc[bathy.latitude[43],bathy.longitude[26]:bathy.longitude[27]] = bathy.loc[bathy.latitude[43],bathy.longitude[26]:bathy.longitude[27]].mean()
+    bathy.loc[bathy.latitude[42],bathy.longitude[25]:bathy.longitude[26]] = bathy.loc[bathy.latitude[42],bathy.longitude[25]:bathy.longitude[26]].mean()
+    bathy.loc[bathy.latitude[41],bathy.longitude[24]:bathy.longitude[25]] = bathy.loc[bathy.latitude[41],bathy.longitude[24]:bathy.longitude[25]].mean()
+    bathy.loc[bathy.latitude[39]:bathy.latitude[40],bathy.longitude[24]:bathy.longitude[25]] = bathy.loc[bathy.latitude[39]:bathy.latitude[40],bathy.longitude[24]:bathy.longitude[25]].mean()
 
     # Small channels
 
@@ -506,8 +518,8 @@ def average_on_structured(lon_st:np.ndarray, lat_st:np.ndarray, files: List[pd.D
 #####################
 
 
-fileLoc = './'                                   # From where files are taken
-fileDest = fileLoc + '/output/'                       # Where files are saved
+fileLoc = './Venice_Lagoon_bathymetry/'                                   # From where files are taken
+fileDest = fileLoc + 'output/'                       # Where files are saved
 
 if not (os.path.exists(fileDest)):
     os.mkdir(fileDest)
