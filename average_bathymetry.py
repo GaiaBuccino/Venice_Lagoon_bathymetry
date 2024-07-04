@@ -175,14 +175,14 @@ def cleaning(bathy: xr.DataArray, percentage: int, coverage_percentage: np.ndarr
         operation.loc[operation.latitude[8],operation.longitude[4]:operation.longitude[6]] = 1
 
         # With redirected channel (Pellestrina)
-
-        operation.loc[operation.latitude[15],operation.longitude[9]] = 1
-        operation.loc[operation.latitude[16],operation.longitude[8]] = 4
-        operation.loc[operation.latitude[16],operation.longitude[9]] = 3
-        operation.loc[operation.latitude[17]:operation.latitude[19],operation.longitude[8]] = 4
-        operation.loc[operation.latitude[17]:operation.latitude[19],operation.longitude[9]:operation.longitude[10]] = 3
-        operation.loc[operation.latitude[20],operation.longitude[9]] = 4
-        operation.loc[operation.latitude[20],operation.longitude[10]] = 3
+        
+        bathy.loc[bathy.latitude[15]:bathy.latitude[19],bathy.longitude[9]] = 0
+        bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[10]] = 0
+        bathy.loc[bathy.latitude[16]:bathy.latitude[20],bathy.longitude[8]] = 9
+        bathy.loc[bathy.latitude[20],bathy.longitude[9]:bathy.latitude[10]] = 9
+        bathy.loc[bathy.latitude[21]:bathy.latitude[23],bathy.longitude[10]] = 9
+        bathy.loc[bathy.latitude[23]:bathy.latitude[25],bathy.longitude[11]] = 9
+        bathy.loc[bathy.latitude[25]:bathy.latitude[26],bathy.longitude[12]] = 9
 
         # Venezia
 
@@ -256,13 +256,21 @@ def cleaning(bathy: xr.DataArray, percentage: int, coverage_percentage: np.ndarr
 
     # With redirected channel (Pellestrina)
 
-    bathy.loc[bathy.latitude[15],bathy.longitude[9]] = val
-    bathy.loc[bathy.latitude[16],bathy.longitude[8]] = bathy.loc[bathy.latitude[16],bathy.longitude[8]] + bathy.loc[bathy.latitude[16],bathy.longitude[9]]
-    bathy.loc[bathy.latitude[16],bathy.longitude[9]] = val
-    bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[8]] = bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[8]] + bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[9]]+ bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[10]]
-    bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[9]:bathy.longitude[10]] = val
-    bathy.loc[bathy.latitude[20],bathy.longitude[9]] = bathy.loc[bathy.latitude[20],bathy.longitude[9]] + bathy.loc[bathy.latitude[20],bathy.longitude[10]]
-    bathy.loc[bathy.latitude[20],bathy.longitude[10]] = val
+    flow_rate = bathy.loc[bathy.latitude[15]:bathy.latitude[19],bathy.longitude[9]].sum() + bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[10]].sum()
+    avg_flow_rate = flow_rate/15        # 15 number of cells that receive water from Pellestrina channel
+
+    bathy.loc[bathy.latitude[15]:bathy.latitude[19],bathy.longitude[9]] = val
+    bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[10]] = val
+    bathy.loc[bathy.latitude[16]:bathy.latitude[20],bathy.longitude[8]] = bathy.loc[bathy.latitude[16]:bathy.latitude[20],bathy.longitude[8]] + avg_flow_rate
+    bathy.loc[bathy.latitude[20],bathy.longitude[9]:bathy.latitude[10]] = bathy.loc[bathy.latitude[20],bathy.longitude[9]:bathy.latitude[10]] + avg_flow_rate
+    bathy.loc[bathy.latitude[21]:bathy.latitude[23],bathy.longitude[10]] = bathy.loc[bathy.latitude[21]:bathy.latitude[23],bathy.longitude[10]] + avg_flow_rate
+    bathy.loc[bathy.latitude[23]:bathy.latitude[25],bathy.longitude[11]] = bathy.loc[bathy.latitude[23]:bathy.latitude[25],bathy.longitude[11]] +avg_flow_rate
+    bathy.loc[bathy.latitude[25]:bathy.latitude[26],bathy.longitude[12]] = bathy.loc[bathy.latitude[25]:bathy.latitude[26],bathy.longitude[12]] +avg_flow_rate
+    # bathy.loc[bathy.latitude[16],bathy.longitude[9]] = val
+    # bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[8]] = bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[8]] + bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[9]]+ bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[10]]
+    # bathy.loc[bathy.latitude[17]:bathy.latitude[19],bathy.longitude[9]:bathy.longitude[10]] = val
+    # bathy.loc[bathy.latitude[20],bathy.longitude[9]] = bathy.loc[bathy.latitude[20],bathy.longitude[9]] + bathy.loc[bathy.latitude[20],bathy.longitude[10]]
+    # bathy.loc[bathy.latitude[20],bathy.longitude[10]] = val
 
     # Venezia
 
@@ -288,6 +296,8 @@ def cleaning(bathy: xr.DataArray, percentage: int, coverage_percentage: np.ndarr
     bathy.loc[bathy.latitude[43],bathy.longitude[26]:bathy.longitude[27]] = bathy.loc[bathy.latitude[43],bathy.longitude[26]:bathy.longitude[27]].mean()
     bathy.loc[bathy.latitude[42],bathy.longitude[25]:bathy.longitude[26]] = bathy.loc[bathy.latitude[42],bathy.longitude[25]:bathy.longitude[26]].mean()
     bathy.loc[bathy.latitude[41],bathy.longitude[24]:bathy.longitude[25]] = bathy.loc[bathy.latitude[41],bathy.longitude[24]:bathy.longitude[25]].mean()
+    bathy.loc[bathy.latitude[39]:bathy.latitude[40],bathy.longitude[24]:bathy.longitude[25]] = bathy.loc[bathy.latitude[39]:bathy.latitude[40],bathy.longitude[24]:bathy.longitude[25]].mean()
+    # repeating average to uniform depths
     bathy.loc[bathy.latitude[39]:bathy.latitude[40],bathy.longitude[24]:bathy.longitude[25]] = bathy.loc[bathy.latitude[39]:bathy.latitude[40],bathy.longitude[24]:bathy.longitude[25]].mean()
 
     # Small channels
