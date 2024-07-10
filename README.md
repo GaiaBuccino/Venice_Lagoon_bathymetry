@@ -79,6 +79,7 @@ Each cell is categorized into a categorical variable as follows:
 | **6**     | R       | Superposition with _original grid_ data of the North Adriatic Sea  |
 | **7**     | R       | Depth value less than threshold      |
 | **8**     | R       | Closure of the domain     |
+| **9**     | P       | Depth value come from a re-distribution and averaged of adiacent cells     |
 
 
 This operation is ad hoc for each case and is performed introducing 
