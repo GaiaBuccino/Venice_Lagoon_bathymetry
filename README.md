@@ -87,7 +87,8 @@ This operation is ad hoc for each case and is performed introducing
 
 The same modifications has to be done on the __bathy__ variable
 
-<ins>Remark:</ins> values 3 and 4 have been introduced to guarantee the conservation of the volume of water. This is done adding the value of the depth of some particular cells to the one adiacent, based on the necessity to avoid the connection of cells or to represent land cells without neglecting important water channels
+<ins>Remark:</ins> values 3, 4 and 9 have been introduced to guarantee the conservation of the volume of water. For values 3 and 4, this is done by adding the value of the depth of some particular cells to the one adiacent, based on the necessity to avoid the connection of cells or to represent land cells without neglecting important water channels. Regarding value 9 instead, the correspondent cells are deepened in order to conserve channel structures. This is done by averaging the amount of water contained in eliminated cells and redistributing it among cells with value 9.
+
 
 ### ADDING
 Once the final bathymetry is ready, it is added to the _original grid_ of the North Adriatic Sea given at the beginning through the simple superposition of the values present in the two different files, the _original grid_ and the _lagoon bathymetry_
