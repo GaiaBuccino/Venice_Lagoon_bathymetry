@@ -544,7 +544,7 @@ lat = dataset['latitude']
 
 NAS_bathy = NAS_bathymetry.to_dataframe(name = 'depth')
 bathymetry_NAS = NAS_bathy.reset_index()
-bathymetry_NAS.to_csv(fileDest + 'NAS_original_bathymetry.csv', header= ['lon','lat','depth'], index=False)
+bathymetry_NAS.to_csv(fileDest + 'NAS_bathymetry.csv', header= ['lon','lat','depth'], index=False)
 
 
 lagoon_bathy = original_bathy.sel(longitude = slice(12.22265625, 12.691406250), latitude= slice(45.12109375,45.589843750))
